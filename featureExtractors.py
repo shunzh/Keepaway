@@ -5,11 +5,11 @@
 # purposes. The Pacman AI projects were developed at UC Berkeley, primarily by
 # John DeNero (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
-
 "Feature extractors for Pacman game states"
 
 from game import Directions, Actions
 import util
+import math
 
 class FeatureExtractor:  
   def getFeatures(self, state, action):    
@@ -20,12 +20,25 @@ class FeatureExtractor:
     """
     util.raiseNotDefined()
 
+
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
+  def __init__(self, numOfFeatures, tileNum):
+    self.numOfFeatures = numOfFeatures
+    self.tileNum = tileNum
+
   def getFeatures(self, state, action):
     """
+      Parse distances and angles to different objects
     """
+    features = [0] * self.numOfFeatures * self.tileNum
+    def setPositive(featureId, tileId):
+      features[featureId * self.tileNum + tileId] = 1
+
+    center = (10, 10) #OVERFIT
+
 
 def getDistance(pos1, pos2):
+  return math.sqrt((pos1[0] - pos1[0])**2 + (pos1[1] - pos1[1])**2)
     
 class IdentityExtractor(FeatureExtractor):
   def getFeatures(self, state, action):
@@ -41,19 +54,20 @@ class GridExtractor(FeatureExtractor):
     feats = util.Counter()
     feats[0] = 1 # biase
 
+    print state, action
     # position feature
     feats[1] = state[0]
     feats[2] = state[1]
     
     # offset to represent actions
     if action == 'north':
-      feats[2] += 0.25
+      feats[2] += 1
     elif action == 'south':
-      feats[2] -= 0.25
+      feats[2] -= 1
     elif action == 'west':
-      feats[1] -= 0.25
+      feats[1] -= 1
     elif action == 'east':
-      feats[1] += 0.25
+      feats[1] += 1
     
     return feats
 

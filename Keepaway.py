@@ -56,7 +56,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     
   def getBallPossessionAgent(self, state):
     ballLoc = state[0]
-    for i in range(1, self.keeperNum + self.takerNum):
+    for i in range(1, self.keeperNum + self.takerNum + 1):
       dist = (state[i][0] - ballLoc[0]) ** 2 + (state[i][1] - ballLoc[1]) ** 2
       if dist < 0.5:
         return i 
@@ -82,9 +82,16 @@ class Keepaway(mdp.MarkovDecisionProcess):
     ballLoc = state[0]
     newState.append((ballLoc[0] + ballLoc[2], ballLoc[1] + ballLoc[3], ballLoc[2], ballLoc[3]))
 
-    # move keepers
+    # move keepers, just close to the ball
+    if action != None:
+      i = self.getBallPossessionAgent(state)
+    #TODO
     
-    # move takers
+    # move takers, depends on the action
+    for j in range(self.keeperNum + 1, self.keeperNum + self.takerNum + 1):
+      pass #TODO
+    
+    return [(newState, 1)]
 
 if __name__ == '__main__':
   height, width = 20

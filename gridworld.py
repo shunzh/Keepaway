@@ -692,6 +692,7 @@ if __name__ == '__main__':
   for episode in range(1, opts.episodes+1):
     thisReturn = runEpisode(a, env, opts.discount, decisionCallback, displayCallback, messageCallback, pauseCallback, episode)
 
+    """
     if opts.agent == 'qApproximate' or opts.agent == 'sarsaApproximate':
       #a.final('TERMINAL_STATE')
 
@@ -704,6 +705,7 @@ if __name__ == '__main__':
       f.write(str(episode) + ' ' + str(values.rms(valueIter)) + '\n')
       
       f.close()
+    """
 
     returns += thisReturn
 
