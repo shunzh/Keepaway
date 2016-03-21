@@ -20,6 +20,13 @@ class FeatureExtractor:
     """
     util.raiseNotDefined()
 
+class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
+  def getFeatures(self, state, action):
+    """
+    """
+
+def getDistance(pos1, pos2):
+    
 class IdentityExtractor(FeatureExtractor):
   def getFeatures(self, state, action):
     feats = util.Counter()
