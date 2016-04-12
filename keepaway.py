@@ -7,19 +7,20 @@
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
 import mdp
-from sarsaLambdaAgents import SarsaLambdaAgent, ApproximateSarsaAgent
-
-class Keeper(SarsaLambdaAgent):
-  def __init__(self):
-    pass
-
-class Taker():
-  def __init__(self):
-    pass
+from sarsaLambdaAgents import ApproximateSarsaAgent
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
     Keepaway world
+    
+    State: (ball, keeper1 ... keeper3, taker1, taker2) 
+    Action:
+      hold, pass (if any keeper keeps the ball)
+      None (o.w.)
+    Transition:
+      Keeper possessing the ball: depends on action
+      Keeper not possessing the ball: get open for a pass
+      Taker: two takers run towards the ball, the other one tries to block passing lanes
   """
   def __init__(self, size = 20, keeperNum = 3, takerNum = 2):
     self.size = size
@@ -34,7 +35,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     that "exit" states transition to the terminal
     state under the special action "done".
     """
-    return [('hold',), ('pass', 1), ('pass', 2), ('pass', 3)]
+    return [('hold',)] + [('pass', i) for i in range(1, self.keeperNum + 1)]
     
   def getReward(self, state, action, nextState):
     """
@@ -71,6 +72,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
     else:
       return False
                    
+  def moveTowards(self, loc, dest):
+    # move a step from loc to dest, and return the new loc
+    pass
+
   def getTransitionStatesAndProbs(self, state, action = None):
     """
     The agent takes the action, and the world proceeds one time step.
@@ -79,17 +84,18 @@ class Keepaway(mdp.MarkovDecisionProcess):
     newState = []
 
     # move ball
-    ballLoc = state[0]
-    newState.append((ballLoc[0] + ballLoc[2], ballLoc[1] + ballLoc[3], ballLoc[2], ballLoc[3]))
+    ball = state[0]
+    newBall = (ballLoc[0] + ballLoc[2], ballLoc[1] + ballLoc[3], ballLoc[2], ballLoc[3])
+    newState.append(newBall)
 
     # move keepers, just close to the ball
-    if action != None:
-      i = self.getBallPossessionAgent(state)
-    #TODO
+    i = self.getBallPossessionAgent(state)
+    for j in range(1, self.keeperNum + 1):
     
     # move takers, depends on the action
     for j in range(self.keeperNum + 1, self.keeperNum + self.takerNum + 1):
-      pass #TODO
+      newLoc = self.moveTowards(state[j], newBall[:2])
+      newState.append(newLoc)
     
     return [(newState, 1)]
 
