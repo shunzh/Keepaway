@@ -12,6 +12,15 @@ import heapq, random
 import math
 from sets import Set
 
+def getDistance(point1, point2):
+  return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+
+def sortByDistances(locs, dest):
+  # sort locs by their distances to dest 
+  # return the indices
+  indices = sorted(range(len(locs)), key=lambda idx: getDistance(locs[idx], dest))
+  return indices
+
 """
  Data structures useful for implementing SearchAgents
 """

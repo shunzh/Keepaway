@@ -33,8 +33,10 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     features = [0] * self.numOfFeatures * self.tileNum
     def setPositive(featureId, tileId):
       features[featureId * self.tileNum + tileId] = 1
-
+      
     center = (10, 10) #OVERFIT
+
+    # compute k1 to k3 according to their distances
 
 
 def getDistance(pos1, pos2):

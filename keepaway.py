@@ -8,6 +8,7 @@
 
 import mdp
 from sarsaLambdaAgents import ApproximateSarsaAgent
+import util
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -19,13 +20,18 @@ class Keepaway(mdp.MarkovDecisionProcess):
       None (o.w.)
     Transition:
       Keeper possessing the ball: depends on action
-      Keeper not possessing the ball: get open for a pass
+      Keeper not possessing the ball: 
+        closest: go to the ball
+        others: get open for a pass
       Taker: two takers run towards the ball, the other one tries to block passing lanes
   """
   def __init__(self, size = 20, keeperNum = 3, takerNum = 2):
     self.size = size
     self.keeperNum = keeperNum
     self.takerNum = takerNum
+    
+    self.ballSpeed = 0.4
+    self.ballAttainDist = 0.3
     
   def getPossibleActions(self, state):
     """
@@ -52,14 +58,16 @@ class Keepaway(mdp.MarkovDecisionProcess):
         
   def getStartState(self):
     size = self.size
-    return ((0, size, 0, 0), (0, size), (size, 0), (size, size),\
-                             (0, 0), (0, 1))
+    # need to specify init locations
+    if self.keeperNum == 3 and self.takerNum == 2:
+      return ((0, size, 0, 0), (0, size), (size, 0), (size, size),\
+                               (0, 0), (0, 1))
     
   def getBallPossessionAgent(self, state):
     ballLoc = state[0]
     for i in range(1, self.keeperNum + self.takerNum + 1):
       dist = (state[i][0] - ballLoc[0]) ** 2 + (state[i][1] - ballLoc[1]) ** 2
-      if dist < 0.5:
+      if dist < self.ballAttainDist:
         return i 
     return None
 
@@ -76,6 +84,16 @@ class Keepaway(mdp.MarkovDecisionProcess):
     # move a step from loc to dest, and return the new loc
     pass
 
+  def getLeastCongestedLoc(self, state, myId):
+    def getCongestion(pos):
+      congest = 0
+      for i in range(1, self.keeperNum + self.takerNum + 1):
+        if i != myId:
+          congest += 1.0 / util.getDistance(pos, state[i])
+      return congest
+    
+    # TODO iterate through the domain and find least congested place
+
   def getTransitionStatesAndProbs(self, state, action = None):
     """
     The agent takes the action, and the world proceeds one time step.
@@ -85,19 +103,42 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
     # move ball
     ball = state[0]
-    newBall = (ballLoc[0] + ballLoc[2], ballLoc[1] + ballLoc[3], ballLoc[2], ballLoc[3])
+    newBall = (ball[0] + ball[2], ball[1] + ball[3], ball[2], ball[3])
     newState.append(newBall)
 
     # move keepers, just close to the ball
-    i = self.getBallPossessionAgent(state)
-    for j in range(1, self.keeperNum + 1):
+    distIndices = util.sortByDistances(state[1: self.keeperNum + 1], newBall[:2])
+    map(lambda _: _+1, distIndices)
+    j = distIndices[0]
+    if j == self.getBallPossessionAgent(state):
+      # j has the ball, its transition depends on the action
+      if action[0] == 'hold':
+        newLoc = state[j]
+      elif action[0] == 'pass':
+        # TODO pass the ball to a teammate
+        pass
+      else:
+        raise Exception('Unknown action')
+    else:
+      # j should go to the ball
+      newLoc = self.moveTowards(state[j], newBall[:2])
+    newState.append(newLoc)
+
+    for j in distIndices[1:]:
+      # other agents get open for a pass
+      # concretely, this agent goes to a least congested place
+      newLoc = self.moveTowards(state[j], self.getLeastCongestedLoc(state, j))
+    newState.append(newLoc)
     
-    # move takers, depends on the action
-    for j in range(self.keeperNum + 1, self.keeperNum + self.takerNum + 1):
+    # move takers
+    for j in range(self.keeperNum + 1, self.keeperNum + 3):
       newLoc = self.moveTowards(state[j], newBall[:2])
       newState.append(newLoc)
+    for j in range(self.keeperNum + 3, self.keeperNum + self.takerNum + 1):
+      # for other keepers, not implemented yet
+      pass
     
-    return [(newState, 1)]
+    return [(tuple(newState), 1)]
 
 if __name__ == '__main__':
   height, width = 20
