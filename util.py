@@ -15,6 +15,14 @@ from sets import Set
 def getDistance(point1, point2):
   return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
+def getDirection(f, t):
+  xDiff = t[0] - f[0]
+  yDiff = t[1] - f[1]
+  vecLength = getDistance((0, 0), (xDiff, yDiff))
+  xDiff = 1.0 * xDiff / vecLength
+  yDiff = 1.0 * xDiff / vecLength
+  return (xDiff, yDiff)
+
 def sortByDistances(locs, dest):
   # sort locs by their distances to dest 
   # return the indices

@@ -32,6 +32,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     
     self.ballSpeed = 0.4
     self.ballAttainDist = 0.3
+    self.moveSpeed = 0.3
     
   def getPossibleActions(self, state):
     """
@@ -82,7 +83,9 @@ class Keepaway(mdp.MarkovDecisionProcess):
                    
   def moveTowards(self, loc, dest):
     # move a step from loc to dest, and return the new loc
-    pass
+    diff = util.getDirection(loc, dest)
+    diff = (diff[0] * self.moveSpeed, diff[1] * self.moveSpeed)
+    return (loc[0] + diff[0], loc[1] + diff[1])
 
   def getLeastCongestedLoc(self, state, myId):
     def getCongestion(pos):
@@ -101,13 +104,12 @@ class Keepaway(mdp.MarkovDecisionProcess):
     """
     newState = []
 
-    # move ball
-    ball = state[0]
-    newBall = (ball[0] + ball[2], ball[1] + ball[3], ball[2], ball[3])
-    newState.append(newBall)
+    # may move ball
+    ball = state[:1]
+    ballVelocity = state[2:]
 
     # move keepers, just close to the ball
-    distIndices = util.sortByDistances(state[1: self.keeperNum + 1], newBall[:2])
+    distIndices = util.sortByDistances(state[1: self.keeperNum + 1], ball)
     map(lambda _: _+1, distIndices)
     j = distIndices[0]
     if j == self.getBallPossessionAgent(state):
@@ -115,13 +117,15 @@ class Keepaway(mdp.MarkovDecisionProcess):
       if action[0] == 'hold':
         newLoc = state[j]
       elif action[0] == 'pass':
-        # TODO pass the ball to a teammate
-        pass
+        # pass the ball to a teammate
+        k = distIndices[action[1]]
+        diff = util.getDirection(state[j], state[k])
+        ballVelocity = (self.ballSpeed * diff[0], self.ballSpeed * diff[1])
       else:
         raise Exception('Unknown action')
     else:
       # j should go to the ball
-      newLoc = self.moveTowards(state[j], newBall[:2])
+      newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
 
     for j in distIndices[1:]:
@@ -132,12 +136,15 @@ class Keepaway(mdp.MarkovDecisionProcess):
     
     # move takers
     for j in range(self.keeperNum + 1, self.keeperNum + 3):
-      newLoc = self.moveTowards(state[j], newBall[:2])
+      newLoc = self.moveTowards(state[j], ball)
       newState.append(newLoc)
     for j in range(self.keeperNum + 3, self.keeperNum + self.takerNum + 1):
       # for other keepers, not implemented yet
       pass
     
+    newBall = (ball[0] + ballVelocity[0], ball[1] + ballVelocity[1],\
+               ballVelocity[0], ballVelocity[1])
+    newState = [newBall] + newState
     return [(tuple(newState), 1)]
 
 if __name__ == '__main__':
