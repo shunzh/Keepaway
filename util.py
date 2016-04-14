@@ -15,6 +15,9 @@ from sets import Set
 def getDistance(point1, point2):
   return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
+def getAngle(a, b, c):
+  pass
+
 def getDirection(f, t):
   xDiff = t[0] - f[0]
   yDiff = t[1] - f[1]

@@ -9,6 +9,7 @@
 import mdp
 from sarsaLambdaAgents import ApproximateSarsaAgent
 import util
+import featureExtractors
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -25,7 +26,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
         others: get open for a pass
       Taker: two takers run towards the ball, the other one tries to block passing lanes
   """
-  def __init__(self, size = 20, keeperNum = 3, takerNum = 2):
+  def __init__(self, size = 5, keeperNum = 3, takerNum = 2):
     self.size = size
     self.keeperNum = keeperNum
     self.takerNum = takerNum
@@ -95,7 +96,19 @@ class Keepaway(mdp.MarkovDecisionProcess):
           congest += 1.0 / util.getDistance(pos, state[i])
       return congest
     
-    # TODO iterate through the domain and find least congested place
+    buffer = 0.15
+    mesh = 1.0 * (self.size - buffer * 2) / 5
+    minCongest  = 100
+    minLoc = None
+    for i in xrange(6):
+      for j in xrange(6):
+        x = buffer + mesh * i
+        y = buffer + mesh * j
+        congest = getCongestion((x, y))
+        if congest < minCongest:
+          minCongest = congest
+          minLoc = (x, y)
+    return minLoc
 
   def getTransitionStatesAndProbs(self, state, action = None):
     """
@@ -146,22 +159,35 @@ class Keepaway(mdp.MarkovDecisionProcess):
                ballVelocity[0], ballVelocity[1])
     newState = [newBall] + newState
     return [(tuple(newState), 1)]
+  
+  def output(self, state):
+    # pirnt out the locations of agents in the current state
+    print "Ball:", state[0]
+    print "Keepers:", state[1 : self.keeperNum + 1]
+    print "Takers:", state[self.keeperNum + 1 :]
 
 if __name__ == '__main__':
-  height, width = 20
+  size = 5
 
   mdp = Keepaway()
-  agent = ApproximateSarsaAgent()
+  actionFn = lambda state: mdp.getPossibleActions(state)
+  qLearnOpts = {'gamma': 0.9, 
+                'alpha': 0.5, 
+                'epsilon': 0.1,
+                'extractor': "ThreeVSTwoKeepawayExtractor",
+                'actionFn': actionFn}
+  agent = ApproximateSarsaAgent(**qLearnOpts)
 
   state = mdp.getStartState()
   while True:
     if mdp.isTerminal(state):
       break
     
-    agentId = mdp.getBallPossessionAgent()
+    agentId = mdp.getBallPossessionAgent(state)
     if agentId == None:
       nextStateInfo = mdp.getTransitionStatesAndProbs(state)
       nextState, prob = nextStateInfo
+      action = None
     else:
       action = agent.getAction(state)
 
@@ -170,5 +196,8 @@ if __name__ == '__main__':
       reward = mdp.getReward(state, action, nextState)
       
       agent.update(state, action, nextState, reward)
+    
+    mdp.output(nextState)
+    print "Action:", action
     
     state = nextState

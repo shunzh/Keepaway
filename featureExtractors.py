@@ -22,21 +22,49 @@ class FeatureExtractor:
 
 
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
-  def __init__(self, numOfFeatures, tileNum):
-    self.numOfFeatures = numOfFeatures
-    self.tileNum = tileNum
+  def __init__(self):
+    self.size = 5.0
+    self.tileNum = 32
+
+  def generateFeatures(self, state, action):
+    center = (self.size / 2, self.size / 2) #OVERFIT
+    ball = state[0][:2]
+    
+    keepersId = util.sortByDistances(state[1:4], ball)
+    takersId = util.sortByDistances(state[4:], ball)
+    
+    # get features as a list of real numbers
+    dists = [getDistance(state[keepersId[0]], ball),\
+             getDistance(state[keepersId[0]], state[keepersId[1]]),\
+             getDistance(state[keepersId[0]], state[keepersId[2]]),\
+
+             getDistance(state[keepersId[0]], state[takersId[0]]),\
+             getDistance(state[keepersId[0]], state[takersId[1]]),\
+             getDistance(state[keepersId[1]], center),\
+             getDistance(state[keepersId[2]], center),\
+
+             getDistance(state[takersId[0]], center),\
+             getDistance(state[takersId[1]], center),\
+
+             min(getDistance(state[keepersId[1], takersId[0]]), getDistance(state[keepersId[1], takersId[1]])),\
+             min(getDistance(state[keepersId[2], takersId[0]]), getDistance(state[keepersId[2], takersId[1]])),\
+             # and more
+            ]
+
+    return dists
 
   def getFeatures(self, state, action):
     """
       Parse distances and angles to different objects
     """
-    features = [0] * self.numOfFeatures * self.tileNum
-    def setPositive(featureId, tileId):
-      features[featureId * self.tileNum + tileId] = 1
+    features = [0] * 13 * self.tileNum
+    def setPositive(featureId, value, tileSize):
+      features[featureId * self.tileNum + value / tileSize] = 1
       
-    center = (10, 10) #OVERFIT
-
-    # compute k1 to k3 according to their distances
+    distTile = None
+    angleTile = None
+    
+    # TODO
 
 
 def getDistance(pos1, pos2):
