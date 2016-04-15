@@ -10,6 +10,7 @@
 from game import Directions, Actions
 import util
 import math
+from util import getDistance
 
 class FeatureExtractor:  
   def getFeatures(self, state, action):    
@@ -26,9 +27,9 @@ def threeVSTwoKeepawayFeatures(state, size):
   
   keepersId = util.sortByDistances(state[1:4], ball)
   takersId = util.sortByDistances(state[4:], ball)
-  map(lambda _: _+1, keepersId)
-  map(lambda _: _+4, takersId)
-  
+  keepersId = map(lambda _: _+1, keepersId)
+  takersId = map(lambda _: _+4, takersId)
+
   # get features as a list of real numbers
   dists = [getDistance(state[keepersId[0]], ball),\
            getDistance(state[keepersId[0]], state[keepersId[1]]),\
@@ -69,9 +70,6 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     feats = threeVSTwoKeepawayFeatures(state, self.size)
     return {id: feats[id] for id in xrange(len(feats))}
 
-def getDistance(pos1, pos2):
-  return math.sqrt((pos1[0] - pos1[0])**2 + (pos1[1] - pos1[1])**2)
-    
 class IdentityExtractor(FeatureExtractor):
   def getFeatures(self, state, action):
     feats = util.Counter()

@@ -31,7 +31,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     self.keeperNum = keeperNum
     self.takerNum = takerNum
     
-    self.ballSpeed = 0.04
+    self.ballSpeed = 0.03
     self.ballAttainDist = 0.03
     self.moveSpeed = 0.015
     
@@ -77,7 +77,6 @@ class Keepaway(mdp.MarkovDecisionProcess):
     ballLoc = state[0][:2]
     for loc in self.getTakers(state):
       dist = util.getDistance(loc, ballLoc)
-      print dist, loc
       if dist < self.ballAttainDist:
         return True
     return False
@@ -196,7 +195,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
       fig.gca().add_artist(taker)
 
     fig.show()
-    plt.pause(0.05)
+    plt.pause(0.01)
 
     # pirnt out the locations of agents in the current state
     print "Ball:", state[0]
@@ -205,37 +204,41 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1
+  episodes = 100
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 0.9, 
                 'alpha': 0.5, 
                 'epsilon': 0.1,
+                'lambdaValue' : 0.2,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
   agent = ApproximateSarsaAgent(**qLearnOpts)
 
-  state = mdp.getStartState()
-  print state
-  while True:
-    if mdp.isTerminal(state):
-      break
-    
-    agentId = mdp.getBallPossessionAgent(state)
-    if agentId == None:
-      nextStateInfo = mdp.getTransitionStatesAndProbs(state, None)[0]
-      nextState, prob = nextStateInfo
-      action = None
-    else:
-      action = agent.getAction(state)
-
-      nextStateInfo = mdp.getTransitionStatesAndProbs(state, action)[0]
-      nextState, prob = nextStateInfo
-      reward = mdp.getReward(state, action, nextState)
+  for _ in xrange(episodes):
+    state = mdp.getStartState()
+    while True:
+      if mdp.isTerminal(state):
+        break
       
-      agent.update(state, action, nextState, reward)
+      agentId = mdp.getBallPossessionAgent(state)
+      if agentId == None:
+        nextStateInfo = mdp.getTransitionStatesAndProbs(state, None)[0]
+        nextState, prob = nextStateInfo
+        action = None
+      else:
+        action = agent.getAction(state)
+
+        nextStateInfo = mdp.getTransitionStatesAndProbs(state, action)[0]
+        nextState, prob = nextStateInfo
+        reward = mdp.getReward(state, action, nextState)
+        
+        agent.update(state, action, nextState, reward)
+      
+      #mdp.output(nextState)
+      print "Action:", action
     
-    mdp.output(nextState)
-    print "Action:", action
-    
-    state = nextState
+      state = nextState
+      
+      print agent.weights
