@@ -26,14 +26,14 @@ class Keepaway(mdp.MarkovDecisionProcess):
         others: get open for a pass
       Taker: two takers run towards the ball, the other one tries to block passing lanes
   """
-  def __init__(self, size = 5, keeperNum = 3, takerNum = 2):
+  def __init__(self, size = 1, keeperNum = 3, takerNum = 2):
     self.size = size
     self.keeperNum = keeperNum
     self.takerNum = takerNum
     
-    self.ballSpeed = 0.4
-    self.ballAttainDist = 0.3
-    self.moveSpeed = 0.3
+    self.ballSpeed = 0.04
+    self.ballAttainDist = 0.03
+    self.moveSpeed = 0.015
     
   def getPossibleActions(self, state):
     """
@@ -63,22 +63,31 @@ class Keepaway(mdp.MarkovDecisionProcess):
     # need to specify init locations
     if self.keeperNum == 3 and self.takerNum == 2:
       return ((0.1, size - 0.1, 0, 0), (0, size), (size, 0), (size, size),\
-                               (0, 0), (0, 1))
+                                       (0, 0), (0, 0.1))
     
   def getBallPossessionAgent(self, state):
-    ballLoc = state[0]
+    ballLoc = state[0][:2]
     for i in range(1, self.keeperNum + self.takerNum + 1):
-      dist = (state[i][0] - ballLoc[0]) ** 2 + (state[i][1] - ballLoc[1]) ** 2
+      dist = util.getDistance(state[i], ballLoc)
       if dist < self.ballAttainDist:
         return i 
     return None
+  
+  def opponentGetsTheBall(self, state):
+    ballLoc = state[0][:2]
+    for loc in self.getTakers(state):
+      dist = util.getDistance(loc, ballLoc)
+      print dist, loc
+      if dist < self.ballAttainDist:
+        return True
+    return False
 
   def isTerminal(self, state):
     ballLoc = state[0]
     if ballLoc[0] < 0 or ballLoc[0] > self.size or ballLoc[1] < 0 or ballLoc[1] > self.size:
       print "Out of playground"
       return True
-    elif self.getBallPossessionAgent(state) > self.keeperNum:
+    elif self.opponentGetsTheBall(state):
       print "Opponent gets the ball"
       return True
     else:
@@ -98,7 +107,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
           congest += 1.0 / util.getDistance(pos, state[i])
       return congest
     
-    buffer = 0.15
+    buffer = 0.05
     mesh = 1.0 * (self.size - buffer * 2) / 5
     minCongest = 100
     minLoc = None
@@ -127,7 +136,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
     # may move ball
     ball = state[0][:2]
-    ballVelocity = state[0][2:]
+    if action == None:
+      ballVelocity = state[0][2:]
+    else:
+      ballVelocity = (0, 0)
 
     # move keepers, just close to the ball
     distIndices = util.sortByDistances(self.getKeepers(state), ball)
@@ -167,13 +179,32 @@ class Keepaway(mdp.MarkovDecisionProcess):
     return [(tuple(newState), 1)]
   
   def output(self, state):
+    import matplotlib.pyplot as plt
+    plt.clf()
+    fig = plt.gcf()
+
+    ball = plt.Circle(state[0][:2],.01,color='r')
+    print ball
+    fig.gca().add_artist(ball)
+
+    for loc in self.getKeepers(state):
+      keeper = plt.Circle(loc,.02,color='b')
+      fig.gca().add_artist(keeper)
+
+    for loc in self.getTakers(state):
+      taker = plt.Circle(loc,.02,color='g')
+      fig.gca().add_artist(taker)
+
+    fig.show()
+    plt.pause(0.05)
+
     # pirnt out the locations of agents in the current state
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
 
 if __name__ == '__main__':
-  size = 5
+  size = 1
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
@@ -185,6 +216,7 @@ if __name__ == '__main__':
   agent = ApproximateSarsaAgent(**qLearnOpts)
 
   state = mdp.getStartState()
+  print state
   while True:
     if mdp.isTerminal(state):
       break

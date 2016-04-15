@@ -21,9 +21,9 @@ def getAngle(a, b, c):
 def getDirection(f, t):
   xDiff = 1.0 * (t[0] - f[0])
   yDiff = 1.0 * (t[1] - f[1])
-  vecLength = getDistance((0, 0), (xDiff, yDiff))
+  vecLength = math.sqrt(xDiff ** 2 + yDiff ** 2)
   xDiff = 1.0 * xDiff / vecLength
-  yDiff = 1.0 * xDiff / vecLength
+  yDiff = 1.0 * yDiff / vecLength
   return (xDiff, yDiff)
 
 def sortByDistances(locs, dest):
