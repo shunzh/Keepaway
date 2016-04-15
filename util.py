@@ -19,8 +19,8 @@ def getAngle(a, b, c):
   pass
 
 def getDirection(f, t):
-  xDiff = t[0] - f[0]
-  yDiff = t[1] - f[1]
+  xDiff = 1.0 * (t[0] - f[0])
+  yDiff = 1.0 * (t[1] - f[1])
   vecLength = getDistance((0, 0), (xDiff, yDiff))
   xDiff = 1.0 * xDiff / vecLength
   yDiff = 1.0 * xDiff / vecLength

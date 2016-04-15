@@ -20,38 +20,39 @@ class FeatureExtractor:
     """
     util.raiseNotDefined()
 
+def threeVSTwoKeepawayFeatures(state, size):
+  center = (size / 2, size / 2) #OVERFIT
+  ball = state[0][:2]
+  
+  keepersId = util.sortByDistances(state[1:4], ball)
+  takersId = util.sortByDistances(state[4:], ball)
+  map(lambda _: _+1, keepersId)
+  map(lambda _: _+4, takersId)
+  
+  # get features as a list of real numbers
+  dists = [getDistance(state[keepersId[0]], ball),\
+           getDistance(state[keepersId[0]], state[keepersId[1]]),\
+           getDistance(state[keepersId[0]], state[keepersId[2]]),\
+
+           getDistance(state[keepersId[0]], state[takersId[0]]),\
+           getDistance(state[keepersId[0]], state[takersId[1]]),\
+           getDistance(state[keepersId[1]], center),\
+           getDistance(state[keepersId[2]], center),\
+
+           getDistance(state[takersId[0]], center),\
+           getDistance(state[takersId[1]], center),\
+
+           min(getDistance(state[keepersId[1]], state[takersId[0]]), getDistance(state[keepersId[1]], state[takersId[1]])),\
+           min(getDistance(state[keepersId[2]], state[takersId[0]]), getDistance(state[keepersId[2]], state[takersId[1]])),\
+           # and more
+          ]
+
+  return dists
 
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
     self.size = 5.0
     self.tileNum = 32
-
-  def generateFeatures(self, state, action):
-    center = (self.size / 2, self.size / 2) #OVERFIT
-    ball = state[0][:2]
-    
-    keepersId = util.sortByDistances(state[1:4], ball)
-    takersId = util.sortByDistances(state[4:], ball)
-    
-    # get features as a list of real numbers
-    dists = [getDistance(state[keepersId[0]], ball),\
-             getDistance(state[keepersId[0]], state[keepersId[1]]),\
-             getDistance(state[keepersId[0]], state[keepersId[2]]),\
-
-             getDistance(state[keepersId[0]], state[takersId[0]]),\
-             getDistance(state[keepersId[0]], state[takersId[1]]),\
-             getDistance(state[keepersId[1]], center),\
-             getDistance(state[keepersId[2]], center),\
-
-             getDistance(state[takersId[0]], center),\
-             getDistance(state[takersId[1]], center),\
-
-             min(getDistance(state[keepersId[1], takersId[0]]), getDistance(state[keepersId[1], takersId[1]])),\
-             min(getDistance(state[keepersId[2], takersId[0]]), getDistance(state[keepersId[2], takersId[1]])),\
-             # and more
-            ]
-
-    return dists
 
   def getFeatures(self, state, action):
     """
@@ -64,8 +65,9 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     distTile = None
     angleTile = None
     
-    # TODO
-
+    # try it first
+    feats = threeVSTwoKeepawayFeatures(state, self.size)
+    return {id: feats[id] for id in xrange(len(feats))}
 
 def getDistance(pos1, pos2):
   return math.sqrt((pos1[0] - pos1[0])**2 + (pos1[1] - pos1[1])**2)
