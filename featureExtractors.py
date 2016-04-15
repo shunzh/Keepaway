@@ -22,7 +22,7 @@ class FeatureExtractor:
     util.raiseNotDefined()
 
 def threeVSTwoKeepawayFeatures(state, size):
-  center = (size / 2, size / 2) #OVERFIT
+  center = (0.5 * size, 0.5 * size)
   ball = state[0][:2]
   
   keepersId = util.sortByDistances(state[1:4], ball)
@@ -31,12 +31,13 @@ def threeVSTwoKeepawayFeatures(state, size):
   takersId = map(lambda _: _+4, takersId)
 
   # get features as a list of real numbers
-  dists = [getDistance(state[keepersId[0]], ball),\
+  feats = [getDistance(state[keepersId[0]], center),\
            getDistance(state[keepersId[0]], state[keepersId[1]]),\
            getDistance(state[keepersId[0]], state[keepersId[2]]),\
 
            getDistance(state[keepersId[0]], state[takersId[0]]),\
            getDistance(state[keepersId[0]], state[takersId[1]]),\
+
            getDistance(state[keepersId[1]], center),\
            getDistance(state[keepersId[2]], center),\
 
@@ -48,11 +49,11 @@ def threeVSTwoKeepawayFeatures(state, size):
            # and more
           ]
 
-  return dists
+  return feats
 
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
-    self.size = 5.0
+    self.size = 1.0
     self.tileNum = 32
 
   def getFeatures(self, state, action):

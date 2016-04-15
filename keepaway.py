@@ -201,10 +201,11 @@ class Keepaway(mdp.MarkovDecisionProcess):
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
+    raw_input("Press Enter to continue...")
 
 if __name__ == '__main__':
   size = 1
-  episodes = 100
+  episodes = 1
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
@@ -236,9 +237,8 @@ if __name__ == '__main__':
         
         agent.update(state, action, nextState, reward)
       
-      #mdp.output(nextState)
+      mdp.output(nextState)
       print "Action:", action
     
       state = nextState
       
-      print agent.weights
