@@ -76,8 +76,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
   def isTerminal(self, state):
     ballLoc = state[0]
     if ballLoc[0] < 0 or ballLoc[0] > self.size or ballLoc[1] < 0 or ballLoc[1] > self.size:
+      print "Out of playground"
       return True
     elif self.getBallPossessionAgent(state) > self.keeperNum:
+      print "Opponent gets the ball"
       return True
     else:
       return False
@@ -116,7 +118,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
   def getTakers(self, state):
     return state[self.keeperNum+1:]
 
-  def getTransitionStatesAndProbs(self, state, action):
+  def getTransitionStatesAndProbs(self, state, action = None):
     """
     The agent takes the action, and the world proceeds one time step.
     None action indicates no ball processor
@@ -189,7 +191,7 @@ if __name__ == '__main__':
     
     agentId = mdp.getBallPossessionAgent(state)
     if agentId == None:
-      nextStateInfo = mdp.getTransitionStatesAndProbs(state)
+      nextStateInfo = mdp.getTransitionStatesAndProbs(state, None)[0]
       nextState, prob = nextStateInfo
       action = None
     else:
