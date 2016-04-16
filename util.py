@@ -19,7 +19,8 @@ def getAngle(a, b, c):
   v1 = getDirection(b, a)
   v2 = getDirection(b, c)
   
-  return math.acos(v1[0] * v2[0] + v1[1] * v2[1])
+  inner = max(min(v1[0] * v2[0] + v1[1] * v2[1], 1), -1)
+  return math.acos(inner)
 
 def getDictDistance(w1, w2):
   """

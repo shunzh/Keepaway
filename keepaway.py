@@ -214,20 +214,20 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1
-  episodes = 20000
+  episodes = 5000
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
-                'alpha': 0.1,
-                'epsilon': 0.5,
+                'alpha': 0.02,
+                'epsilon': 0.2,
                 'lambdaValue': 0,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
   #agent = ApproximateSarsaAgent(**qLearnOpts)
   agent = ApproximateQAgent(**qLearnOpts)
   if os.path.exists('weights.p'):
-    agent.weights = pickle.load(open( "weights.p", "wb" ))
+    agent.weights = pickle.load(open( "weights.p", "rb" ))
 
   tList = []
   for _ in xrange(episodes):
@@ -251,17 +251,17 @@ if __name__ == '__main__':
         
         agent.update(state, action, nextState, reward)
       
-      mdp.output(nextState)
-      print "Action:", action
+      #mdp.output(nextState)
+      #print "Action:", action
       t += 1
     
       state = nextState
 
     if _ % 100 == 0:
       pickle.dump(tList, open( "time.p", "wb" ))
-    pprint.pprint(agent.weights)
+    #pprint.pprint(agent.weights)
     agent.final(state)
-    print t
+    print '#', _, t
     tList.append(t)
 
   pickle.dump(agent.weights, open( "weights.p", "wb" ))
