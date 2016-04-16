@@ -58,6 +58,51 @@ def threeVSTwoKeepawayFeatures(state, size):
           ]
   return feats
 
+def fourVSThreeKeepawayFeatures(state, size):
+  C = (0.5 * size, 0.5 * size)
+  ball = state[0][:2]
+  
+  keepersId = util.sortByDistances(state[1:4], ball)
+  takersId = util.sortByDistances(state[4:], ball)
+  keepersId = map(lambda _: _+1, keepersId)
+  takersId = map(lambda _: _+4, takersId)
+
+  K1 = state[keepersId[0]]
+  K2 = state[keepersId[1]]
+  K3 = state[keepersId[2]]
+  K4 = state[keepersId[3]]
+  T1 = state[takersId[0]]
+  T2 = state[takersId[1]]
+  T3 = state[takersId[2]]
+
+  # get features as a list of real numbers
+  feats = [getDistance(K1, C),\
+           getDistance(K1, K2),\
+           getDistance(K1, K3),\
+           getDistance(K1, K4),\
+
+           getDistance(K1, T1),\
+           getDistance(K1, T2),\
+           getDistance(K1, T3),\
+
+           getDistance(K2, C),\
+           getDistance(K3, C),\
+           getDistance(K4, C),\
+
+           getDistance(T1, C),\
+           getDistance(T2, C),\
+           getDistance(T3, C),\
+
+           min([getDistance(K2, T1), getDistance(K2, T2), getDistance(K2, T3)]),\
+           min([getDistance(K3, T1), getDistance(K3, T2), getDistance(K3, T3)]),\
+           min([getDistance(K4, T1), getDistance(K4, T2), getDistance(K4, T3)]),\
+           
+           min([getAngle(K2, K1, T1), getAngle(K2, K1, T2), getAngle(K2, K1, T3)]),\
+           min([getAngle(K3, K1, T1), getAngle(K3, K1, T2), getAngle(K3, K1, T3)]),\
+           min([getAngle(K4, K1, T1), getAngle(K4, K1, T2), getAngle(K4, K1, T3)]),\
+          ]
+  return feats
+
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
     self.size = 1.0 # size of the domain

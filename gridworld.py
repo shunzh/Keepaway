@@ -441,9 +441,6 @@ def runEpisode(agent, environment, discount, decision, display, message, pause, 
     returns += reward * totalDiscount
     totalDiscount *= discount
 
-  if 'stopEpisode' in dir(agent):
-    agent.stopEpisode()
-
 def parseOptions():
     optParser = optparse.OptionParser()
     optParser.add_option('-d', '--discount',action='store',
@@ -608,7 +605,7 @@ if __name__ == '__main__':
     qLearnOpts = {'gamma': opts.discount, 
                   'alpha': opts.learningRate, 
                   'epsilon': opts.epsilon,
-		  'extractor': opts.extractor,
+                  'extractor': opts.extractor,
                   'lambdaValue' : opts.lambdaValue,
                   'replace' : opts.replace,
                   'actionFn': actionFn}
@@ -691,6 +688,7 @@ if __name__ == '__main__':
   #policyFile.write(str(opts.iters) + ' ' + str(checkPolicy(a)) + '\n')
   for episode in range(1, opts.episodes+1):
     thisReturn = runEpisode(a, env, opts.discount, decisionCallback, displayCallback, messageCallback, pauseCallback, episode)
+    a.final(None)#fixme
 
     """
     if opts.agent == 'qApproximate' or opts.agent == 'sarsaApproximate':

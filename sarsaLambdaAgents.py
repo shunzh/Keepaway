@@ -34,6 +34,7 @@ class SarsaLambdaAgent(ReinforcementAgent):
     "*** YOUR CODE HERE ***"
     # value counter
     self.values = util.Counter()
+    self.targetValues = util.Counter()
     # initialize e_t
     self.e = util.Counter()
     # keeping the action of next state
@@ -126,10 +127,7 @@ class SarsaLambdaAgent(ReinforcementAgent):
       it will be called on your behalf
     """
     "*** YOUR CODE HERE ***"
-    # we need next action for SARSA
-    self.nextAction = self.calculateAction(nextState)
-    
-    delta = reward + self.gamma * self.getQValue(nextState, self.nextAction) - self.getQValue(state, action)
+    delta = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
 
     if self.replace:
       self.e[state, action] = 1
@@ -137,12 +135,15 @@ class SarsaLambdaAgent(ReinforcementAgent):
       self.e[state, action] += 1
 
     for state, action in self.values:
-      self.values[state, action] += self.alpha * delta * self.e[state, action]
+      # here, update the target values
+      self.targetValues[state, action] += self.alpha * delta * self.e[state, action]
       self.e[state, action] *= self.gamma * self.lambdaValue
 
-    if self.nextAction == None:
-      # clear eligibility trace when this episode ends
-      self.e = Counter()
+  def final(self, state):
+    # clear eligibility traces
+    self.e = util.Counter()
+    # copy current values to the target
+    self.values = self.targetValues
 
 class ApproximateSarsaAgent(SarsaLambdaAgent):
   """
@@ -161,7 +162,9 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
 
     # You might want to initialize weights here.
     "*** YOUR CODE HERE ***"
+    # we are not using values
     self.weights = util.Counter()
+    self.targetWeights = util.Counter()
     self.times = 0
     
   def getQValue(self, state, action):
@@ -199,26 +202,9 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
         self.e[feature] += value
     
     for feature, value in self.featExtractor.getFeatures(state, action).items():
-      self.weights[feature] += self.alpha * correction * self.e[feature]
-
-    if self.nextAction == None:
-      # clear eligibility trace when this episode ends
-      self.e = Counter()
-
-    #util.raiseNotDefined()
+      self.targetWeights[feature] += self.alpha * correction * self.e[feature]
 
   def final(self, state):
     "Called at the end of each game."
-    f = open("weights", "a")
-
-    output = str(self.times) + str(self.weights)
-    f.write(output)
-    f.close()
-
-    self.times += 1
-    
-    # did we finish training?
-    if self.episodesSoFar == self.numTraining:
-      # you might want to print your weights here for debugging
-      "*** YOUR CODE HERE ***"
-      pass
+    SarsaLambdaAgent.final(self, state)
+    self.weights = self.targetWeights

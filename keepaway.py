@@ -56,9 +56,9 @@ class Keepaway(mdp.MarkovDecisionProcess):
     less use this convention).
     """
     if self.isTerminal(nextState):
-      return -1
-    else:
       return 0
+    else:
+      return 1
         
   def getStartState(self):
     size = self.size
@@ -207,16 +207,17 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1
-  episodes = 5000
+  episodes = 1000
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 0.9, 
                 'alpha': 0.1,
                 'epsilon': 0.05,
+                'lambdaValue': 0.1,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
-  agent = ApproximateQAgent(**qLearnOpts)
+  agent = ApproximateSarsaAgent(**qLearnOpts)
 
   tList = []
   for _ in xrange(episodes):
@@ -246,7 +247,8 @@ if __name__ == '__main__':
     
       state = nextState
       
-    #pprint.pprint(agent.weights)
+    pprint.pprint(agent.weights)
+    agent.final(state)
     print t
     tList.append(t)
     pickle.dump(tList, open( "time.p", "wb" ))
