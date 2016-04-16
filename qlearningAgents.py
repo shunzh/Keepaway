@@ -48,10 +48,7 @@ class QLearningAgent(ReinforcementAgent):
     """
     "*** YOUR CODE HERE ***"
     return self.values[state, action]
-    
-    #util.raiseNotDefined()
-  
-    
+   
   def getValue(self, state):
     """
       Returns max_action Q(state,action)        
@@ -74,14 +71,17 @@ class QLearningAgent(ReinforcementAgent):
       you should return None.
     """
     "*** YOUR CODE HERE ***"
+    maxValue = None
     actions = self.getLegalActions(state)
-    if actions: 
-      q_value_func = lambda action: self.getQValue(state, action)
-      return max(actions, key=q_value_func)
+    if actions:
+      for action in actions:
+        q = self.getQValue(state, action)
+        if q > maxValue:
+          maxValue = q
+      maxActs = filter(lambda act: self.getQValue(state, act) == maxValue, actions)
+      return random.choice(maxActs)
     else:
       return None
-
-    #util.raiseNotDefined()
     
   def getAction(self, state):
     """
@@ -120,38 +120,6 @@ class QLearningAgent(ReinforcementAgent):
     new_qvalue = (1 - self.alpha) * self.getQValue(state, action) + self.alpha * sample 
     self.values[state, action] = new_qvalue 
 
-
-class PacmanQAgent(QLearningAgent):
-  "Exactly the same as QLearningAgent, but with different default parameters"
-  
-  def __init__(self, epsilon=0.05,gamma=0.8,alpha=0.2, numTraining=0, **args):
-    """
-    These default parameters can be changed from the pacman.py command line.
-    For example, to change the exploration rate, try:
-        python pacman.py -p PacmanQLearningAgent -a epsilon=0.1
-    
-    alpha    - learning rate
-    epsilon  - exploration rate
-    gamma    - discount factor
-    numTraining - number of training episodes, i.e. no learning after these many episodes
-    """
-    args['epsilon'] = epsilon
-    args['gamma'] = gamma
-    args['alpha'] = alpha
-    args['numTraining'] = numTraining
-    self.index = 0  # This is always Pacman
-    QLearningAgent.__init__(self, **args)
-
-  def getAction(self, state):
-    """
-    Simply calls the getAction method of QLearningAgent and then
-    informs parent of action for Pacman.  Do not change or remove this
-    method.
-    """
-    action = QLearningAgent.getAction(self,state)
-    self.doAction(state,action)
-    return action
-    
 class ApproximateQAgent(QLearningAgent):
   """
      ApproximateQLearningAgent
@@ -170,6 +138,7 @@ class ApproximateQAgent(QLearningAgent):
     # You might want to initialize weights here.
     "*** YOUR CODE HERE ***"
     self.weights = util.Counter()
+    self.oldWeights = util.Counter()
     self.times = 0
 
     if extractor == 'BairdsExtractor':
@@ -205,21 +174,5 @@ class ApproximateQAgent(QLearningAgent):
     #util.raiseNotDefined()
 
   def final(self, state):
-    "Called at the end of each game."
-    # for output of Baird's counterexample
-    f = open("weights", "a")
-
-    output = str(self.times) + ' '
-    for i in range(7):
-      output += str(self.weights[i]) + ' '
-    output += '\n'
-    f.write(output)
-    f.close()
-
-    self.times += 1
-    
-    # did we finish training?
-    if self.episodesSoFar == self.numTraining:
-      # you might want to print your weights here for debugging
-      "*** YOUR CODE HERE ***"
-      pass
+    print util.getDictDistance(self.weights, self.oldWeights)
+    self.oldWeights = self.weights.copy()

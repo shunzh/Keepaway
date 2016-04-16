@@ -34,12 +34,15 @@ class SarsaLambdaAgent(ReinforcementAgent):
     "*** YOUR CODE HERE ***"
     # value counter
     self.values = util.Counter()
-    self.targetValues = util.Counter()
+    self.workingValues = util.Counter()
     # initialize e_t
     self.e = util.Counter()
     # keeping the action of next state
     self.nextAction = None
   
+  def getTargetQValue(self, state, action):
+    return self.values[state, action]
+
   def getQValue(self, state, action):
     """
       Returns Q(state,action)    
@@ -47,7 +50,7 @@ class SarsaLambdaAgent(ReinforcementAgent):
       a state or (state,action) tuple 
     """
     "*** YOUR CODE HERE ***"
-    return self.values[state, action]
+    return self.workingValues[state, action]
     
     #util.raiseNotDefined()
   
@@ -73,26 +76,20 @@ class SarsaLambdaAgent(ReinforcementAgent):
       you should return None.
     """
     "*** YOUR CODE HERE ***"
+    maxValue = None
     actions = self.getLegalActions(state)
-    if actions: 
-      q_value_func = lambda action: self.getQValue(state, action)
-      return max(actions, key=q_value_func)
+    if actions:
+      for action in actions:
+        q = self.getTargetQValue(state, action)
+        if q > maxValue:
+          maxValue = q
+      maxActs = filter(lambda act: self.getTargetQValue(state, act) == maxValue, actions)
+      return random.choice(maxActs)
     else:
       return None
-
     #util.raiseNotDefined()
     
   def getAction(self, state):
-    """
-      For SARSA, the action should be determined in the previous state (as action')
-      If so, return it. Otherwise, calculate it.
-    """
-    if self.nextAction:
-      return self.nextAction
-    else:
-      return self.calculateAction(state)
-   
-  def calculateAction(self, state):
     """
       Compute the action to take in the current state.  With
       probability self.epsilon, we should take a random action and
@@ -134,16 +131,16 @@ class SarsaLambdaAgent(ReinforcementAgent):
     else:
       self.e[state, action] += 1
 
-    for state, action in self.values:
+    for state, action in self.workingValues:
       # here, update the target values
-      self.targetValues[state, action] += self.alpha * delta * self.e[state, action]
+      self.workingValues[state, action] += self.alpha * delta * self.e[state, action]
       self.e[state, action] *= self.gamma * self.lambdaValue
 
   def final(self, state):
     # clear eligibility traces
     self.e = util.Counter()
     # copy current values to the target
-    self.values = self.targetValues
+    self.values = self.workingValues.copy()
 
 class ApproximateSarsaAgent(SarsaLambdaAgent):
   """
@@ -164,7 +161,7 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
     "*** YOUR CODE HERE ***"
     # we are not using values
     self.weights = util.Counter()
-    self.targetWeights = util.Counter()
+    self.workingWeights = util.Counter()
     self.times = 0
     
   def getQValue(self, state, action):
@@ -175,36 +172,36 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
     "*** YOUR CODE HERE ***"
     q = 0.0
 
-    if state == 'TERMINAL_STATE':
-      return 0
+    for feature, value in self.featExtractor.getFeatures(state, action).items():
+      q += self.workingWeights[feature] * value
+    return q
+  
+  def getTargetQValue(self, state, action):
+    """
+      Only used for getPolicy
+    """
+    q = 0.0
 
     for feature, value in self.featExtractor.getFeatures(state, action).items():
       q += self.weights[feature] * value
     return q
-    #util.raiseNotDefined()
     
   def update(self, state, action, nextState, reward):
     """
        Should update your weights based on transition  
     """
     "*** YOUR CODE HERE ***"
-    self.nextAction = self.calculateAction(nextState)
-
-    correction = reward + self.gamma * self.getQValue(nextState, self.nextAction) - self.getQValue(state, action)
+    correction = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
 
     for feature, value in self.featExtractor.getFeatures(state, action).items():
       self.e[feature] *= self.lambdaValue * self.gamma
-
-      if self.replace:
-        # not plus 1. it means *how much* this feature has been involved
-        self.e[feature] = value
-      else:
-        self.e[feature] += value
+      self.e[feature] += value
     
     for feature, value in self.featExtractor.getFeatures(state, action).items():
-      self.targetWeights[feature] += self.alpha * correction * self.e[feature]
+      self.workingWeights[feature] += self.alpha * correction * self.e[feature]
 
   def final(self, state):
     "Called at the end of each game."
     SarsaLambdaAgent.final(self, state)
-    self.weights = self.targetWeights
+    print util.getDictDistance(self.weights, self.workingWeights)
+    self.weights = self.workingWeights.copy()

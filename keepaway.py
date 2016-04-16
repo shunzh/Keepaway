@@ -12,6 +12,7 @@ import util
 from qlearningAgents import ApproximateQAgent
 import pprint
 import pickle
+import os
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -33,9 +34,9 @@ class Keepaway(mdp.MarkovDecisionProcess):
     self.keeperNum = keeperNum
     self.takerNum = takerNum
     
-    self.ballSpeed = 0.03
+    self.ballSpeed = 0.025
     self.ballAttainDist = 0.03
-    self.moveSpeed = 0.015
+    self.moveSpeed = 0.02
     
   def getPossibleActions(self, state):
     """
@@ -108,12 +109,12 @@ class Keepaway(mdp.MarkovDecisionProcess):
           congest += 1.0 / util.getDistance(pos, state[i])
       return congest
     
-    buffer = 0.05
-    mesh = 1.0 * (self.size - buffer * 2) / 5
+    buffer = 0.1
+    mesh = 1.0 * (self.size - buffer * 2) / 4
     minCongest = 100
     minLoc = None
-    for i in xrange(6):
-      for j in xrange(6):
+    for i in xrange(5):
+      for j in xrange(5):
         x = buffer + mesh * i
         y = buffer + mesh * j
         congest = getCongestion((x, y))
@@ -142,9 +143,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
     else:
       ballVelocity = (0, 0)
 
-    # move keepers, just close to the ball
     distIndices = util.sortByDistances(self.getKeepers(state), ball)
     distIndices = map(lambda _: _+1, distIndices)
+
+    # most closest agent, possess the ball, or go to the ball 
     j = distIndices[0]
     if j == self.getBallPossessionAgent(state):
       # j has the ball, its transition depends on the action
@@ -163,8 +165,15 @@ class Keepaway(mdp.MarkovDecisionProcess):
       newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
 
+    """
+    # second closest agent, go to the ball 
+    j = distIndices[1]
+    newLoc = self.moveTowards(state[j], ball)
+    newState.append(newLoc)
+    """
+
+    # other agents get open for a pass
     for j in distIndices[1:]:
-      # other agents get open for a pass
       # concretely, this agent goes to a least congested place
       newLoc = self.moveTowards(state[j], self.getLeastCongestedLoc(state, j))
       newState.append(newLoc)
@@ -207,17 +216,20 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1
-  episodes = 1000
+  episodes = 20000
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
-  qLearnOpts = {'gamma': 0.9, 
+  qLearnOpts = {'gamma': 1, 
                 'alpha': 0.1,
-                'epsilon': 0.05,
-                'lambdaValue': 0.1,
+                'epsilon': 0.5,
+                'lambdaValue': 0,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
-  agent = ApproximateSarsaAgent(**qLearnOpts)
+  #agent = ApproximateSarsaAgent(**qLearnOpts)
+  agent = ApproximateQAgent(**qLearnOpts)
+  if os.path.exists('weights.p'):
+    agent.weights = pickle.load(open( "weights.p", "wb" ))
 
   tList = []
   for _ in xrange(episodes):
@@ -241,14 +253,17 @@ if __name__ == '__main__':
         
         agent.update(state, action, nextState, reward)
       
-      #mdp.output(nextState)
-      #print "Action:", action
+      mdp.output(nextState)
+      print "Action:", action
       t += 1
     
       state = nextState
-      
+
+    if _ % 100 == 0:
+      pickle.dump(tList, open( "time.p", "wb" ))
     pprint.pprint(agent.weights)
     agent.final(state)
     print t
     tList.append(t)
-    pickle.dump(tList, open( "time.p", "wb" ))
+
+  pickle.dump(agent.weights, open( "weights.p", "wb" ))

@@ -121,19 +121,18 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     """
       Parse distances and angles to different objects
     """
-
-    features = [0] * 13 * self.tileNum
-    def setPositive(featureId, value, tileWidth, tileOffset):
+    features = util.Counter()
+    def setPositive(featureId, value, action, tileWidth, tileOffset):
       for i in range(int((value - tileWidth) / tileOffset), int(value / tileOffset)):
-        features[featureId * self.tileNum + i] = 1
+        features[(featureId, i, action)] = 1
       
     feats = threeVSTwoKeepawayFeatures(state, self.size)
     for i in xrange(11):
-      setPositive(i, feats[i], self.distTileWidth, self.distTileOffset)
+      setPositive(i, feats[i], action, self.distTileWidth, self.distTileOffset)
     for i in xrange(11, 13):
-      setPositive(i, feats[i], self.angleTileWidth, self.angleTileOffset)
+      setPositive(i, feats[i], action, self.angleTileWidth, self.angleTileOffset)
     
-    return {id: features[id] for id in xrange(len(features))}
+    return features
 
 class IdentityExtractor(FeatureExtractor):
   def getFeatures(self, state, action):
