@@ -10,7 +10,7 @@
 from game import Directions, Actions
 import util
 import math
-from util import getDistance
+from util import getDistance, getAngle
 
 class FeatureExtractor:  
   def getFeatures(self, state, action):    
@@ -22,7 +22,7 @@ class FeatureExtractor:
     util.raiseNotDefined()
 
 def threeVSTwoKeepawayFeatures(state, size):
-  center = (0.5 * size, 0.5 * size)
+  C = (0.5 * size, 0.5 * size)
   ball = state[0][:2]
   
   keepersId = util.sortByDistances(state[1:4], ball)
@@ -30,46 +30,69 @@ def threeVSTwoKeepawayFeatures(state, size):
   keepersId = map(lambda _: _+1, keepersId)
   takersId = map(lambda _: _+4, takersId)
 
+  K1 = state[keepersId[0]]
+  K2 = state[keepersId[1]]
+  K3 = state[keepersId[2]]
+  T1 = state[takersId[0]]
+  T2 = state[takersId[1]]
+
   # get features as a list of real numbers
-  feats = [getDistance(state[keepersId[0]], center),\
-           getDistance(state[keepersId[0]], state[keepersId[1]]),\
-           getDistance(state[keepersId[0]], state[keepersId[2]]),\
+  feats = [getDistance(K1, C),\
+           getDistance(K1, K2),\
+           getDistance(K1, K3),\
 
-           getDistance(state[keepersId[0]], state[takersId[0]]),\
-           getDistance(state[keepersId[0]], state[takersId[1]]),\
+           getDistance(K1, T1),\
+           getDistance(K1, T2),\
 
-           getDistance(state[keepersId[1]], center),\
-           getDistance(state[keepersId[2]], center),\
+           getDistance(K2, C),\
+           getDistance(K3, C),\
 
-           getDistance(state[takersId[0]], center),\
-           getDistance(state[takersId[1]], center),\
+           getDistance(T1, C),\
+           getDistance(T2, C),\
 
-           min(getDistance(state[keepersId[1]], state[takersId[0]]), getDistance(state[keepersId[1]], state[takersId[1]])),\
-           min(getDistance(state[keepersId[2]], state[takersId[0]]), getDistance(state[keepersId[2]], state[takersId[1]])),\
-           # and more
+           min(getDistance(K2, T1), getDistance(K2, T2)),\
+           min(getDistance(K3, T1), getDistance(K3, T2)),\
+           
+           min(getAngle(K2, K1, T1), getAngle(K2, K1, T2)),\
+           min(getAngle(K3, K1, T1), getAngle(K3, K1, T2))
           ]
+  print feats
 
   return feats
 
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
-    self.size = 1.0
-    self.tileNum = 32
+    self.size = 1.0 # size of the domain
+    self.tileNum = 15
+
+    self.distMax = 1.415
+    self.angleMax = 3.15
+
+    self.distTileWidth = 0.2
+    self.angleTileWidth = 0.3
+
+    self.distTileOffset = (self.distMax - self.distTileWidth) / self.tileNum
+    self.angleTileOffset = (self.angleMax - self.angleTileWidth) / self.tileNum
 
   def getFeatures(self, state, action):
     """
       Parse distances and angles to different objects
     """
+
     features = [0] * 13 * self.tileNum
-    def setPositive(featureId, value, tileSize):
-      features[featureId * self.tileNum + value / tileSize] = 1
+    def setPositive(featureId, value, tileWidth, tileOffset):
+      for i in range(int((value - tileWidth) / tileOffset), int(value / tileOffset)):
+        features[featureId * self.tileNum + i] = 1
       
-    distTile = None
-    angleTile = None
-    
-    # try it first
     feats = threeVSTwoKeepawayFeatures(state, self.size)
-    return {id: feats[id] for id in xrange(len(feats))}
+    for i in xrange(11):
+      setPositive(i, feats[i], self.distTileWidth, self.distTileOffset)
+    for i in xrange(11, 13):
+      setPositive(i, feats[i], self.angleTileWidth, self.angleTileOffset)
+    
+    print features
+    
+    return {id: features[id] for id in xrange(len(features))}
 
 class IdentityExtractor(FeatureExtractor):
   def getFeatures(self, state, action):

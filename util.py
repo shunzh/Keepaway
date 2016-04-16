@@ -16,7 +16,10 @@ def getDistance(point1, point2):
   return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
 def getAngle(a, b, c):
-  pass
+  v1 = getDirection(b, a)
+  v2 = getDirection(b, c)
+  
+  return math.acos(v1[0] * v2[0] + v1[1] * v2[1])
 
 def getDirection(f, t):
   xDiff = 1.0 * (t[0] - f[0])
