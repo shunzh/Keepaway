@@ -56,20 +56,18 @@ def threeVSTwoKeepawayFeatures(state, size):
            min(getAngle(K2, K1, T1), getAngle(K2, K1, T2)),\
            min(getAngle(K3, K1, T1), getAngle(K3, K1, T2))
           ]
-  print feats
-
   return feats
 
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
     self.size = 1.0 # size of the domain
-    self.tileNum = 15
+    self.tileNum = 40
 
     self.distMax = 1.415
     self.angleMax = 3.15
 
-    self.distTileWidth = 0.2
-    self.angleTileWidth = 0.3
+    self.distTileWidth = 0.15
+    self.angleTileWidth = 0.2
 
     self.distTileOffset = (self.distMax - self.distTileWidth) / self.tileNum
     self.angleTileOffset = (self.angleMax - self.angleTileWidth) / self.tileNum
@@ -89,8 +87,6 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
       setPositive(i, feats[i], self.distTileWidth, self.distTileOffset)
     for i in xrange(11, 13):
       setPositive(i, feats[i], self.angleTileWidth, self.angleTileOffset)
-    
-    print features
     
     return {id: features[id] for id in xrange(len(features))}
 

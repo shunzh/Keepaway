@@ -9,7 +9,9 @@
 import mdp
 from sarsaLambdaAgents import ApproximateSarsaAgent
 import util
-import featureExtractors
+from qlearningAgents import ApproximateQAgent
+import pprint
+import pickle
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -53,8 +55,8 @@ class Keepaway(mdp.MarkovDecisionProcess):
     departed (as in the R+N book examples, which more or
     less use this convention).
     """
-    if not self.isTerminal(nextState):
-      return 1
+    if self.isTerminal(nextState):
+      return -1
     else:
       return 0
         
@@ -84,10 +86,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
   def isTerminal(self, state):
     ballLoc = state[0]
     if ballLoc[0] < 0 or ballLoc[0] > self.size or ballLoc[1] < 0 or ballLoc[1] > self.size:
-      print "Out of playground"
+      #print "Out of playground"
       return True
     elif self.opponentGetsTheBall(state):
-      print "Opponent gets the ball"
+      #print "Opponent gets the ball"
       return True
     else:
       return False
@@ -201,23 +203,24 @@ class Keepaway(mdp.MarkovDecisionProcess):
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
-    raw_input("Press Enter to continue...")
+    #raw_input("Press Enter to continue...")
 
 if __name__ == '__main__':
   size = 1
-  episodes = 1
+  episodes = 5000
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 0.9, 
-                'alpha': 0.5, 
-                'epsilon': 0.1,
-                'lambdaValue' : 0.2,
+                'alpha': 0.1,
+                'epsilon': 0.05,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
-  agent = ApproximateSarsaAgent(**qLearnOpts)
+  agent = ApproximateQAgent(**qLearnOpts)
 
+  tList = []
   for _ in xrange(episodes):
+    t = 0
     state = mdp.getStartState()
     while True:
       if mdp.isTerminal(state):
@@ -237,8 +240,13 @@ if __name__ == '__main__':
         
         agent.update(state, action, nextState, reward)
       
-      mdp.output(nextState)
-      print "Action:", action
+      #mdp.output(nextState)
+      #print "Action:", action
+      t += 1
     
       state = nextState
       
+    #pprint.pprint(agent.weights)
+    print t
+    tList.append(t)
+    pickle.dump(tList, open( "time.p", "wb" ))
