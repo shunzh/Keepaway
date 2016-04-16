@@ -143,7 +143,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     else:
       ballVelocity = (0, 0)
 
-    distIndices = util.sortByDistances(self.getKeepers(state), ball)
+    distIndices = util.sortByDistToVector(self.getKeepers(state), ball, ballVelocity)
     distIndices = map(lambda _: _+1, distIndices)
 
     # most closest agent, possess the ball, or go to the ball 
@@ -165,15 +165,13 @@ class Keepaway(mdp.MarkovDecisionProcess):
       newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
 
-    """
     # second closest agent, go to the ball 
     j = distIndices[1]
     newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
-    """
 
     # other agents get open for a pass
-    for j in distIndices[1:]:
+    for j in distIndices[2:]:
       # concretely, this agent goes to a least congested place
       newLoc = self.moveTowards(state[j], self.getLeastCongestedLoc(state, j))
       newState.append(newLoc)

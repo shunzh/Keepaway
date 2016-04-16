@@ -11,7 +11,6 @@ import inspect
 import heapq, random
 import math
 from sets import Set
-import numpy as np
 
 def getDistance(point1, point2):
   return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
@@ -33,15 +32,35 @@ def getDirection(f, t):
   xDiff = 1.0 * (t[0] - f[0])
   yDiff = 1.0 * (t[1] - f[1])
   vecLength = math.sqrt(xDiff ** 2 + yDiff ** 2)
-  xDiff = 1.0 * xDiff / vecLength
-  yDiff = 1.0 * yDiff / vecLength
-  return (xDiff, yDiff)
+  if vecLength == 0:
+    return (0, 0)
+  else:
+    xDiff = 1.0 * xDiff / vecLength
+    yDiff = 1.0 * yDiff / vecLength
+    return (xDiff, yDiff)
 
 def sortByDistances(locs, dest):
   # sort locs by their distances to dest 
   # return the indices
   indices = sorted(range(len(locs)), key=lambda idx: getDistance(locs[idx], dest))
   return indices
+
+def sortByDistToVector(locs, ball, ballVec):
+  # sort locs by their distances to dest 
+  # return the indices
+  indices = sorted(range(len(locs)), key=lambda idx: getPointVectorDistance(locs[idx], ball, ballVec))
+  return indices
+
+def getPointVectorDistance(me, ball, ballVec):
+  vecPoint = (ball[0] + ballVec[0], ball[1] + ballVec[1])
+  angle = getAngle(vecPoint, ball, me)
+  if angle > 1.57:
+    # no hope
+    dist = 100
+  else:
+    dist = getDistance(ball, me) * math.sin(angle)
+
+  return dist
 
 """
  Data structures useful for implementing SearchAgents
