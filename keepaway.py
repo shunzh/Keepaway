@@ -232,7 +232,7 @@ if __name__ == '__main__':
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
-                'epsilon': 0.01 if EXPLORE else 0,
+                'epsilon': 0.1 if EXPLORE else 0,
                 'lambdaValue': 0,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}

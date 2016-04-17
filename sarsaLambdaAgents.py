@@ -191,7 +191,7 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
        Should update your weights based on transition  
     """
     "*** YOUR CODE HERE ***"
-    correction = reward + self.gamma * self.getValue(nextState) - self.getValue(state)
+    correction = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
 
     featPairs = self.featExtractor.getFeatures(state, action).items()
     alpha = 0.2 / 60
@@ -206,5 +206,5 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
   def final(self, state):
     "Called at the end of each game."
     SarsaLambdaAgent.final(self, state)
-    print util.getDictDistance(self.weights, self.workingWeights)
+    #print util.getDictDistance(self.weights, self.workingWeights)
     self.weights = self.workingWeights.copy()
