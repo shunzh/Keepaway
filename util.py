@@ -49,7 +49,10 @@ def sortByDistances(locs, dest):
 def sortByDistToVector(locs, ball, ballVec):
   # sort locs by their distances to dest 
   # return the indices
-  indices = sorted(range(len(locs)), key=lambda idx: getPointVectorDistance(locs[idx], ball, ballVec))
+  if ballVec == (0, 0):
+    indices = sorted(range(len(locs)), key=lambda idx: getDistance(locs[idx], ball))
+  else:
+    indices = sorted(range(len(locs)), key=lambda idx: getPointVectorDistance(locs[idx], ball, ballVec))
   return indices
 
 def getPointVectorDistance(me, ball, ballVec):

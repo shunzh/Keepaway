@@ -75,13 +75,12 @@ class Keepaway(mdp.MarkovDecisionProcess):
     else:
       raise Exception("Unknown configuration.")
     
-  def getBallPossessionAgent(self, state):
+  def weHaveBall(self, state):
     ballLoc = state[0][:2]
-    for i in range(1, self.keeperNum + 1):
-      dist = util.getDistance(state[i], ballLoc)
-      if dist < self.ballAttainDist:
-        return i 
-    return None
+    dist = util.getDistance(state[1], ballLoc)
+    if dist < self.ballAttainDist:
+      return True
+    return False
   
   def opponentGetsTheBall(self, state):
     ballLoc = state[0][:2]
@@ -108,11 +107,11 @@ class Keepaway(mdp.MarkovDecisionProcess):
     diff = (diff[0] * self.moveSpeed, diff[1] * self.moveSpeed)
     return (loc[0] + diff[0], loc[1] + diff[1])
 
-  def getLeastCongestedLoc(self, state, myId):
+  def getLeastCongestedLoc(self, state, loc):
     def getCongestion(pos):
       congest = 0
       for i in range(1, self.keeperNum + self.takerNum + 1):
-        if i != myId:
+        if state[i] != loc:
           congest += 1.0 / (util.getDistance(pos, state[i]) + 0.0001)
       return congest
     
@@ -141,8 +140,6 @@ class Keepaway(mdp.MarkovDecisionProcess):
     The agent takes the action, and the world proceeds one time step.
     None action indicates no ball processor
     """
-    newState = []
-
     # may move ball
     ball = state[0][:2]
     if action == None:
@@ -150,46 +147,40 @@ class Keepaway(mdp.MarkovDecisionProcess):
     else:
       ballVelocity = (0, 0)
 
-    distIndices = util.sortByDistToVector(self.getKeepers(state), ball, ballVelocity)
-    distIndices = map(lambda _: _+1, distIndices)
+    keepers = list(self.getKeepers(state))
+    takers = list(self.getTakers(state))
 
+    keepers = sorted(keepers, key=lambda keeper: util.getPointVectorDistance(keeper, ball, ballVelocity))
     # most closest agent, possess the ball, or go to the ball 
-    j = distIndices[0]
-    if j == self.getBallPossessionAgent(state):
+    if self.weHaveBall(state):
       # j has the ball, its transition depends on the action
       if action[0] == 'hold':
         pass
       elif action[0] == 'pass':
         # pass the ball to a teammate
-        k = distIndices[action[1]]
-        diff = util.getDirection(state[j], state[k])
+        diff = util.getDirection(keepers[0], keepers[action[1]])
         ballVelocity = (self.ballSpeed * diff[0], self.ballSpeed * diff[1])
       else:
         raise Exception('Unknown action')
-      newLoc = state[j]
     else:
       # j should go to the ball
-      newLoc = self.moveTowards(state[j], ball)
-    newState.append(newLoc)
+      keepers[0] = self.moveTowards(keepers[0], ball)
 
     # other agents get open for a pass
-    for j in distIndices[1:]:
+    for i in xrange(1, len(keepers)):
       # concretely, this agent goes to a least congested place
-      newLoc = self.moveTowards(state[j], self.getLeastCongestedLoc(state, j))
-      newState.append(newLoc)
+      keepers[i] = self.moveTowards(keepers[i], self.getLeastCongestedLoc(state, keepers[i]))
+    keepers = sorted(keepers, key=lambda keeper: util.getDistance(keeper, ball))
     
-    # move takers to the ball
-    takers = self.getTakers(state)
-    for loc in takers[:2]:
-      newLoc = self.moveTowards(loc, ball)
-      newState.append(newLoc)
-    for loc in takers[2:]:
-      newLoc = self.moveTowards(loc, state[distIndices[1]])
-      newState.append(newLoc)
+    for i in xrange(2):
+      takers[i] = self.moveTowards(takers[i], ball)
+    for i in xrange(2, len(takers)):
+      takers[i] = self.moveTowards(takers[i], keepers[1])
+    takers = sorted(takers, key=lambda taker: util.getDistance(taker, keepers[0]))
     
     newBall = (ball[0] + ballVelocity[0], ball[1] + ballVelocity[1],\
                ballVelocity[0], ballVelocity[1])
-    newState = [newBall] + newState
+    newState = [newBall] + keepers + takers
     return [(tuple(newState), 1)]
   
   def output(self, state):
@@ -215,7 +206,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
-    #raw_input("Press Enter to continue...")
+    raw_input("Press Enter to continue...")
 
 if __name__ == '__main__':
   size = 1.0
@@ -231,7 +222,7 @@ if __name__ == '__main__':
       PLOT = True
 
   mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 400; extractor = "ThreeVSTwoKeepawayExtractor"
-  #mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 250; extractor = "FourVSThreeKeepawayExtractor"
+  #mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 500; extractor = "FourVSThreeKeepawayExtractor"
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
                 'alpha': alpha,
@@ -245,8 +236,11 @@ if __name__ == '__main__':
       agent = ApproximateSarsaAgent(**qLearnOpts)
     else:
       agent = ApproximateQAgent(**qLearnOpts)
+    
+    fileLable = sys.argv[1]
   except:
-    agent = ApproximateQAgent(**qLearnOpts)
+    agent = ApproximateSarsaAgent(**qLearnOpts)
+    fileLable = ""
 
   if os.path.exists('weights.p'):
     weights = pickle.load(open( "weights.p", "rb" ))
@@ -261,8 +255,7 @@ if __name__ == '__main__':
       if mdp.isTerminal(state) or t > 900:
         break
       
-      agentId = mdp.getBallPossessionAgent(state)
-      if agentId == None:
+      if not mdp.weHaveBall(state):
         nextStateInfo = mdp.getTransitionStatesAndProbs(state, None)[0]
         nextState, prob = nextStateInfo
         action = None
@@ -283,7 +276,8 @@ if __name__ == '__main__':
     #pprint.pprint(agent.weights)
     agent.final(state)
     tList.append(t)
+    print _, t
     
     if (_ + 1) % 500 == 0:
-      pickle.dump(tList, open( "time" + sys.argv[1] + ".p", "wb" ))
-      pickle.dump(agent.weights, open( "weights" + sys.argv[1] + "_" + str(_) + ".p", "wb" ))
+      pickle.dump(tList, open( "time" + fileLable + ".p", "wb" ))
+      pickle.dump(agent.weights, open( "weights" + fileLable + "_" + str(_) + ".p", "wb" ))

@@ -23,19 +23,8 @@ class FeatureExtractor:
 
 def threeVSTwoKeepawayFeatures(state, size):
   C = (0.5 * size, 0.5 * size)
-  ball = state[0][:2]
-  ballVelocity = state[0][2:]
   
-  keepersId = util.sortByDistToVector(state[1:4], ball, ballVelocity)
-  takersId = util.sortByDistances(state[4:], ball)
-  keepersId = map(lambda _: _+1, keepersId)
-  takersId = map(lambda _: _+4, takersId)
-
-  K1 = state[keepersId[0]]
-  K2 = state[keepersId[1]]
-  K3 = state[keepersId[2]]
-  T1 = state[takersId[0]]
-  T2 = state[takersId[1]]
+  K1, K2, K3, T1, T2 = state[1:6]
 
   # get features as a list of real numbers
   feats = [getDistance(K1, C),\
@@ -61,21 +50,9 @@ def threeVSTwoKeepawayFeatures(state, size):
 
 def fourVSThreeKeepawayFeatures(state, size):
   C = (0.5 * size, 0.5 * size)
-  ball = state[0][:2]
+
+  K1, K2, K3, K4, T1, T2, T3 = state[1:8]
   
-  keepersId = util.sortByDistances(state[1:5], ball)
-  takersId = util.sortByDistances(state[5:], ball)
-  keepersId = map(lambda _: _+1, keepersId)
-  takersId = map(lambda _: _+4, takersId)
-
-  K1 = state[keepersId[0]]
-  K2 = state[keepersId[1]]
-  K3 = state[keepersId[2]]
-  K4 = state[keepersId[3]]
-  T1 = state[takersId[0]]
-  T2 = state[takersId[1]]
-  T3 = state[takersId[2]]
-
   # get features as a list of real numbers
   feats = [getDistance(K1, C),\
            getDistance(K1, K2),\
