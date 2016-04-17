@@ -124,7 +124,7 @@ class SarsaLambdaAgent(ReinforcementAgent):
       it will be called on your behalf
     """
     "*** YOUR CODE HERE ***"
-    delta = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
+    delta = reward + self.gamma * self.getValue(nextState) - self.getValue(state)
 
     if self.replace:
       self.e[state, action] = 1
@@ -191,14 +191,17 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
        Should update your weights based on transition  
     """
     "*** YOUR CODE HERE ***"
-    correction = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
+    correction = reward + self.gamma * self.getValue(nextState) - self.getValue(state)
 
-    for feature, value in self.featExtractor.getFeatures(state, action).items():
+    featPairs = self.featExtractor.getFeatures(state, action).items()
+    alpha = 0.2 / 60
+
+    for feature, value in featPairs:
       self.e[feature] *= self.lambdaValue * self.gamma
       self.e[feature] += value
     
     for feature, value in self.featExtractor.getFeatures(state, action).items():
-      self.workingWeights[feature] += self.alpha * correction * self.e[feature]
+      self.workingWeights[feature] += alpha * correction * self.e[feature]
 
   def final(self, state):
     "Called at the end of each game."

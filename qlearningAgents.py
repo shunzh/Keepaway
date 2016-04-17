@@ -6,7 +6,6 @@
 # John DeNero (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
-from game import *
 from learningAgents import ReinforcementAgent
 from featureExtractors import *
 
@@ -168,10 +167,13 @@ class ApproximateQAgent(QLearningAgent):
        Should update your weights based on transition  
     """
     "*** YOUR CODE HERE ***"
-    correction = (reward + self.gamma * self.getValue(nextState)) - self.getQValue(state, action)
-    for feature, value in self.featExtractor.getFeatures(state, action).items():
-      self.weights[feature] += self.alpha * correction * value
-    #util.raiseNotDefined()
+    correction = reward + self.gamma * self.getValue(nextState) - self.getValue(state)
+
+    featPairs = self.featExtractor.getFeatures(state, action).items()
+    alpha = 0.1 / 60
+
+    for feature, value in featPairs:
+      self.weights[feature] += alpha * correction * value
 
   def final(self, state):
     print util.getDictDistance(self.weights, self.oldWeights)

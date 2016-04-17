@@ -24,8 +24,9 @@ class FeatureExtractor:
 def threeVSTwoKeepawayFeatures(state, size):
   C = (0.5 * size, 0.5 * size)
   ball = state[0][:2]
+  ballVelocity = state[0][2:]
   
-  keepersId = util.sortByDistances(state[1:4], ball)
+  keepersId = util.sortByDistToVector(state[1:4], ball, ballVelocity)
   takersId = util.sortByDistances(state[4:], ball)
   keepersId = map(lambda _: _+1, keepersId)
   takersId = map(lambda _: _+4, takersId)
@@ -123,7 +124,7 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     """
     features = util.Counter()
     def setPositive(featureId, value, action, tileWidth, tileOffset):
-      for i in range(int((value - tileWidth) / tileOffset), int(value / tileOffset)):
+      for i in range(max(0, int((value - tileWidth) / tileOffset)), int(value / tileOffset)):
         features[(featureId, i, action)] = 1
       
     feats = threeVSTwoKeepawayFeatures(state, self.size)

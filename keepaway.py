@@ -13,6 +13,7 @@ from qlearningAgents import ApproximateQAgent
 import pprint
 import pickle
 import os
+import sys
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -165,13 +166,15 @@ class Keepaway(mdp.MarkovDecisionProcess):
       newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
 
+    """
     # second closest agent, go to the ball 
     j = distIndices[1]
     newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
+    """
 
     # other agents get open for a pass
-    for j in distIndices[2:]:
+    for j in distIndices[1:]:
       # concretely, this agent goes to a least congested place
       newLoc = self.moveTowards(state[j], self.getLeastCongestedLoc(state, j))
       newState.append(newLoc)
@@ -192,7 +195,6 @@ class Keepaway(mdp.MarkovDecisionProcess):
     fig = plt.gcf()
 
     ball = plt.Circle(state[0][:2],.01,color='r')
-    print ball
     fig.gca().add_artist(ball)
 
     for loc in self.getKeepers(state):
@@ -206,26 +208,36 @@ class Keepaway(mdp.MarkovDecisionProcess):
     fig.show()
     plt.pause(0.01)
 
+    """
     # pirnt out the locations of agents in the current state
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
     #raw_input("Press Enter to continue...")
+    """
 
 if __name__ == '__main__':
   size = 1
-  episodes = 5000
+  episodes = 6000
+  PLOT = False
+  EXPLORE = True
+
+  if len(sys.argv) > 1:
+    if sys.argv[1] == 'test':
+      PLOT = True
+      EXPLORE = False
+    elif sys.argv[1] == 'check':
+      PLOT = True
 
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
-                'alpha': 0.02,
-                'epsilon': 0.2,
+                'epsilon': 0.01 if EXPLORE else 0,
                 'lambdaValue': 0,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
-  #agent = ApproximateSarsaAgent(**qLearnOpts)
-  agent = ApproximateQAgent(**qLearnOpts)
+  agent = ApproximateSarsaAgent(**qLearnOpts)
+  #agent = ApproximateQAgent(**qLearnOpts)
   if os.path.exists('weights.p'):
     agent.weights = pickle.load(open( "weights.p", "rb" ))
 
@@ -251,17 +263,16 @@ if __name__ == '__main__':
         
         agent.update(state, action, nextState, reward)
       
-      #mdp.output(nextState)
-      #print "Action:", action
+      if PLOT: mdp.output(nextState); print "Action:", action
       t += 1
     
       state = nextState
 
-    if _ % 100 == 0:
-      pickle.dump(tList, open( "time.p", "wb" ))
     #pprint.pprint(agent.weights)
     agent.final(state)
     print '#', _, t
     tList.append(t)
 
-  pickle.dump(agent.weights, open( "weights.p", "wb" ))
+    if (_ + 1) % 2000 == 0:
+      pickle.dump(tList, open( "time.p", "wb" ))
+      pickle.dump(agent.weights, open( "weights" + str(_) + ".p", "wb" ))
