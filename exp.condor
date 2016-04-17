@@ -2,13 +2,11 @@ Universe = vanilla
 Executable = /usr/local/bin/python
 +Project = "AI_ROBOTICS"
 +Group = "grad"
-Notification = Complete
+Notification = Never
 Notify_user = menie482@cs.utexas.edu
-Output     = out.grid.$(Process)
-Error      = err.grid.$(Process)
 Log        = grid.log
 
-num_of_processes=20
+num_of_processes=8
 
 Arguments = keepaway.py $(Process)
 Queue $(num_of_processes)
