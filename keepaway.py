@@ -219,7 +219,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1.0
-  episodes = 6000
+  episodes = 20000
   PLOT = False
   EXPLORE = True
 
@@ -230,8 +230,8 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'check':
       PLOT = True
 
-  #mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 200; extractor = "ThreeVSTwoKeepawayExtractor"
-  mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 250; extractor = "FourVSThreeKeepawayExtractor"
+  mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 400; extractor = "ThreeVSTwoKeepawayExtractor"
+  #mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 250; extractor = "FourVSThreeKeepawayExtractor"
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
                 'alpha': alpha,
@@ -239,19 +239,26 @@ if __name__ == '__main__':
                 'lambdaValue': 0,
                 'extractor': extractor,
                 'actionFn': actionFn}
-  agent = ApproximateSarsaAgent(**qLearnOpts)
-  #agent = ApproximateQAgent(**qLearnOpts)
+
+  try:
+    if int(sys.argv[1]) < 10:
+      agent = ApproximateSarsaAgent(**qLearnOpts)
+    else:
+      agent = ApproximateQAgent(**qLearnOpts)
+  except:
+    agent = ApproximateQAgent(**qLearnOpts)
+
   if os.path.exists('weights.p'):
     weights = pickle.load(open( "weights.p", "rb" ))
-    #agent.weights = weights
-    agent.weights = featureExtractors.keepwayWeightTranslation(weights)
+    agent.weights = weights
+    #agent.weights = featureExtractors.keepwayWeightTranslation(weights)
 
   tList = []
   for _ in xrange(episodes):
     t = 0
     state = mdp.getStartState()
     while True:
-      if mdp.isTerminal(state):
+      if mdp.isTerminal(state) or t > 900:
         break
       
       agentId = mdp.getBallPossessionAgent(state)
@@ -266,8 +273,7 @@ if __name__ == '__main__':
         nextState, prob = nextStateInfo
         reward = mdp.getReward(state, action, nextState)
         
-        if EXPLORE:
-          agent.update(state, action, nextState, reward)
+        agent.update(state, action, nextState, reward)
       
       if PLOT: mdp.output(nextState); print "Action:", action
       t += 1
@@ -276,9 +282,7 @@ if __name__ == '__main__':
 
     #pprint.pprint(agent.weights)
     agent.final(state)
-    print '#', _, t
     tList.append(t)
 
-    if (_ + 1) % 1000 == 0:
-      pickle.dump(tList, open( "time.p", "wb" ))
-      pickle.dump(agent.weights, open( "weights" + str(_) + ".p", "wb" ))
+  pickle.dump(tList, open( "time" + sys.argv[1] + ".p", "wb" ))
+  pickle.dump(agent.weights, open( "weights" + sys.argv[1] + ".p", "wb" ))

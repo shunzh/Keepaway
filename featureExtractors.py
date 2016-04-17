@@ -110,7 +110,7 @@ def keepwayWeightTranslation(weights):
   def copyFeature(idOld, idNew):
     for id, i, action in weights.keys():
       if id == idOld:
-        newWeights[(id, i, action)] = weights[(id, i, action)]
+        newWeights[(idNew, i, action)] = weights[(idOld, i, action)]
   
   copyFeature(0, 0)
 
@@ -147,8 +147,8 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     self.distTileWidth = 0.15
     self.angleTileWidth = 0.17
 
-    self.distTileOffset = self.distTileWidth / 16
-    self.angleTileOffset = self.angleTileWidth / 16
+    self.distTileOffset = self.distTileWidth / 32
+    self.angleTileOffset = self.angleTileWidth / 32
 
   def getFeatures(self, state, action):
     """
