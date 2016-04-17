@@ -208,13 +208,11 @@ class Keepaway(mdp.MarkovDecisionProcess):
     fig.show()
     plt.pause(0.01)
 
-    """
     # pirnt out the locations of agents in the current state
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
     #raw_input("Press Enter to continue...")
-    """
 
 if __name__ == '__main__':
   size = 1
@@ -232,7 +230,7 @@ if __name__ == '__main__':
   mdp = Keepaway()
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
-                'epsilon': 0.1 if EXPLORE else 0,
+                'epsilon': 0.01 if EXPLORE else 0,
                 'lambdaValue': 0,
                 'extractor': "ThreeVSTwoKeepawayExtractor",
                 'actionFn': actionFn}
@@ -261,7 +259,8 @@ if __name__ == '__main__':
         nextState, prob = nextStateInfo
         reward = mdp.getReward(state, action, nextState)
         
-        agent.update(state, action, nextState, reward)
+        if EXPLORE:
+          agent.update(state, action, nextState, reward)
       
       if PLOT: mdp.output(nextState); print "Action:", action
       t += 1
@@ -273,6 +272,6 @@ if __name__ == '__main__':
     print '#', _, t
     tList.append(t)
 
-    if (_ + 1) % 2000 == 0:
+    if (_ + 1) % 1000 == 0:
       pickle.dump(tList, open( "time.p", "wb" ))
       pickle.dump(agent.weights, open( "weights" + str(_) + ".p", "wb" ))

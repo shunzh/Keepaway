@@ -107,16 +107,12 @@ def fourVSThreeKeepawayFeatures(state, size):
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
     self.size = 1.0 # size of the domain
-    self.tileNum = 40
-
-    self.distMax = 1.415
-    self.angleMax = 3.15
 
     self.distTileWidth = 0.15
-    self.angleTileWidth = 0.2
+    self.angleTileWidth = 0.17
 
-    self.distTileOffset = (self.distMax - self.distTileWidth) / self.tileNum
-    self.angleTileOffset = (self.angleMax - self.angleTileWidth) / self.tileNum
+    self.distTileOffset = self.distTileWidth / 16
+    self.angleTileOffset = self.angleTileWidth / 16
 
   def getFeatures(self, state, action):
     """
@@ -124,8 +120,8 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     """
     features = util.Counter()
     def setPositive(featureId, value, action, tileWidth, tileOffset):
-      for i in range(max(0, int((value - tileWidth) / tileOffset)), int(value / tileOffset)):
-        features[(featureId, i, action)] = 1
+      for j in range(max(0, int((value - tileWidth) / tileOffset)), int(value / tileOffset)):
+        features[(featureId, j, action)] = 1
       
     feats = threeVSTwoKeepawayFeatures(state, self.size)
     for i in xrange(11):
