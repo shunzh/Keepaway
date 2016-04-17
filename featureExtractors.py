@@ -63,8 +63,8 @@ def fourVSThreeKeepawayFeatures(state, size):
   C = (0.5 * size, 0.5 * size)
   ball = state[0][:2]
   
-  keepersId = util.sortByDistances(state[1:4], ball)
-  takersId = util.sortByDistances(state[4:], ball)
+  keepersId = util.sortByDistances(state[1:5], ball)
+  takersId = util.sortByDistances(state[5:], ball)
   keepersId = map(lambda _: _+1, keepersId)
   takersId = map(lambda _: _+4, takersId)
 
@@ -104,6 +104,42 @@ def fourVSThreeKeepawayFeatures(state, size):
           ]
   return feats
 
+def keepwayWeightTranslation(weights):
+  newWeights = util.Counter()
+  
+  def copyFeature(idOld, idNew):
+    for id, i, action in weights.keys():
+      if id == idOld:
+        newWeights[(id, i, action)] = weights[(id, i, action)]
+  
+  copyFeature(0, 0)
+
+  copyFeature(1, 1)
+  copyFeature(2, 2)
+  copyFeature(2, 3)
+
+  copyFeature(3, 4)
+  copyFeature(4, 5)
+  copyFeature(4, 6)
+
+  copyFeature(5, 7)
+  copyFeature(6, 8)
+  copyFeature(6, 9)
+
+  copyFeature(7, 10)
+  copyFeature(8, 11)
+  copyFeature(8, 12)
+
+  copyFeature(9, 13)
+  copyFeature(10, 14)
+  copyFeature(10, 15)
+
+  copyFeature(11, 16)
+  copyFeature(12, 17)
+  copyFeature(12, 18)
+  
+  return newWeights
+
 class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
   def __init__(self):
     self.size = 1.0 # size of the domain
@@ -127,6 +163,27 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     for i in xrange(11):
       setPositive(i, feats[i], action, self.distTileWidth, self.distTileOffset)
     for i in xrange(11, 13):
+      setPositive(i, feats[i], action, self.angleTileWidth, self.angleTileOffset)
+    
+    return features
+
+class FourVSThreeKeepawayExtractor(ThreeVSTwoKeepawayExtractor):
+  def __init__(self):
+    ThreeVSTwoKeepawayExtractor.__init__(self)
+
+  def getFeatures(self, state, action):
+    """
+      Parse distances and angles to different objects
+    """
+    features = util.Counter()
+    def setPositive(featureId, value, action, tileWidth, tileOffset):
+      for j in range(max(0, int((value - tileWidth) / tileOffset)), int(value / tileOffset)):
+        features[(featureId, j, action)] = 1
+      
+    feats = fourVSThreeKeepawayFeatures(state, self.size)
+    for i in xrange(16):
+      setPositive(i, feats[i], action, self.distTileWidth, self.distTileOffset)
+    for i in xrange(16, 19):
       setPositive(i, feats[i], action, self.angleTileWidth, self.angleTileOffset)
     
     return features

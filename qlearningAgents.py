@@ -170,10 +170,9 @@ class ApproximateQAgent(QLearningAgent):
     correction = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
 
     featPairs = self.featExtractor.getFeatures(state, action).items()
-    alpha = 0.1 / 60
 
     for feature, value in featPairs:
-      self.weights[feature] += alpha * correction * value
+      self.weights[feature] += self.alpha * correction * value
 
   def final(self, state):
     #print util.getDictDistance(self.weights, self.oldWeights)

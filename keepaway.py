@@ -14,6 +14,7 @@ import pprint
 import pickle
 import os
 import sys
+import featureExtractors
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -30,7 +31,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
         others: get open for a pass
       Taker: two takers run towards the ball, the other one tries to block passing lanes
   """
-  def __init__(self, size = 1, keeperNum = 3, takerNum = 2):
+  def __init__(self, size = 1.0, keeperNum = 3, takerNum = 2):
     self.size = size
     self.keeperNum = keeperNum
     self.takerNum = takerNum
@@ -67,11 +68,16 @@ class Keepaway(mdp.MarkovDecisionProcess):
     # need to specify init locations
     if self.keeperNum == 3 and self.takerNum == 2:
       return ((0.1, size - 0.1, 0, 0), (0, size), (size, 0), (size, size),\
-                                       (0, 0), (0, 0.1))
+                                       (0.1, 0), (0, 0.1))
+    elif self.keeperNum == 4 and self.takerNum == 3:
+      return ((0.1, size - 0.1, 0, 0), (0, size), (size, 0), (size, size), (size / 2, size / 2),\
+                                       (0.1, 0), (0, 0.1), (0.1, 0.1))
+    else:
+      raise Exception("Unknown configuration.")
     
   def getBallPossessionAgent(self, state):
     ballLoc = state[0][:2]
-    for i in range(1, self.keeperNum + self.takerNum + 1):
+    for i in range(1, self.keeperNum + 1):
       dist = util.getDistance(state[i], ballLoc)
       if dist < self.ballAttainDist:
         return i 
@@ -107,7 +113,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
       congest = 0
       for i in range(1, self.keeperNum + self.takerNum + 1):
         if i != myId:
-          congest += 1.0 / util.getDistance(pos, state[i])
+          congest += 1.0 / (util.getDistance(pos, state[i]) + 0.0001)
       return congest
     
     buffer = 0.1
@@ -166,13 +172,6 @@ class Keepaway(mdp.MarkovDecisionProcess):
       newLoc = self.moveTowards(state[j], ball)
     newState.append(newLoc)
 
-    """
-    # second closest agent, go to the ball 
-    j = distIndices[1]
-    newLoc = self.moveTowards(state[j], ball)
-    newState.append(newLoc)
-    """
-
     # other agents get open for a pass
     for j in distIndices[1:]:
       # concretely, this agent goes to a least congested place
@@ -180,8 +179,12 @@ class Keepaway(mdp.MarkovDecisionProcess):
       newState.append(newLoc)
     
     # move takers to the ball
-    for loc in self.getTakers(state):
+    takers = self.getTakers(state)
+    for loc in takers[:2]:
       newLoc = self.moveTowards(loc, ball)
+      newState.append(newLoc)
+    for loc in takers[2:]:
+      newLoc = self.moveTowards(loc, state[distIndices[1]])
       newState.append(newLoc)
     
     newBall = (ball[0] + ballVelocity[0], ball[1] + ballVelocity[1],\
@@ -215,7 +218,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     #raw_input("Press Enter to continue...")
 
 if __name__ == '__main__':
-  size = 1
+  size = 1.0
   episodes = 6000
   PLOT = False
   EXPLORE = True
@@ -227,17 +230,21 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'check':
       PLOT = True
 
-  mdp = Keepaway()
+  #mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 200; extractor = "ThreeVSTwoKeepawayExtractor"
+  mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 250; extractor = "FourVSThreeKeepawayExtractor"
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
-                'epsilon': 0.01 if EXPLORE else 0,
+                'alpha': alpha,
+                'epsilon': 0.02 if EXPLORE else 0,
                 'lambdaValue': 0,
-                'extractor': "ThreeVSTwoKeepawayExtractor",
+                'extractor': extractor,
                 'actionFn': actionFn}
   agent = ApproximateSarsaAgent(**qLearnOpts)
   #agent = ApproximateQAgent(**qLearnOpts)
   if os.path.exists('weights.p'):
-    agent.weights = pickle.load(open( "weights.p", "rb" ))
+    weights = pickle.load(open( "weights.p", "rb" ))
+    #agent.weights = weights
+    agent.weights = featureExtractors.keepwayWeightTranslation(weights)
 
   tList = []
   for _ in xrange(episodes):

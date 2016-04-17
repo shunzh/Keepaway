@@ -194,14 +194,13 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
     correction = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
 
     featPairs = self.featExtractor.getFeatures(state, action).items()
-    alpha = 0.1 / 200
 
     for feature, value in featPairs:
       self.e[feature] *= self.lambdaValue * self.gamma
       self.e[feature] += value
     
     for feature, value in self.featExtractor.getFeatures(state, action).items():
-      self.workingWeights[feature] += alpha * correction * self.e[feature]
+      self.workingWeights[feature] += self.alpha * correction * self.e[feature]
 
   def final(self, state):
     "Called at the end of each game."
