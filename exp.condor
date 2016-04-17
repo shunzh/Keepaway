@@ -4,7 +4,6 @@ Executable = /usr/local/bin/python
 +Group = "grad"
 Notification = Never
 Notify_user = menie482@cs.utexas.edu
-Log        = grid.log
 
 num_of_processes=8
 

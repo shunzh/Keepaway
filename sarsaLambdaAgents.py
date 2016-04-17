@@ -205,5 +205,5 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
   def final(self, state):
     "Called at the end of each game."
     SarsaLambdaAgent.final(self, state)
-    #print util.getDictDistance(self.weights, self.workingWeights)
+    print util.getDictDistance(self.weights, self.workingWeights)
     self.weights = self.workingWeights.copy()
