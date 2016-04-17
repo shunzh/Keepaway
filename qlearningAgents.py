@@ -167,7 +167,7 @@ class ApproximateQAgent(QLearningAgent):
        Should update your weights based on transition  
     """
     "*** YOUR CODE HERE ***"
-    correction = reward + self.gamma * self.getValue(nextState) - self.getValue(state)
+    correction = reward + self.gamma * self.getValue(nextState) - self.getQValue(state, action)
 
     featPairs = self.featExtractor.getFeatures(state, action).items()
     alpha = 0.1 / 60
@@ -176,5 +176,5 @@ class ApproximateQAgent(QLearningAgent):
       self.weights[feature] += alpha * correction * value
 
   def final(self, state):
-    print util.getDictDistance(self.weights, self.oldWeights)
+    #print util.getDictDistance(self.weights, self.oldWeights)
     self.oldWeights = self.weights.copy()
