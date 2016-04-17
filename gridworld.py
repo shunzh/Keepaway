@@ -460,7 +460,7 @@ def parseOptions():
                          type='float',dest='lambdaValue',default=0.9,
                          help='Lambda for SARSA(lambda) (default %default)')
     optParser.add_option('-l', '--learningRate',action='store',
-                         type='float',dest='learningRate',default=0.5,
+                         type='float',dest='learningRate',default=0.1,
                          metavar="P", help='TD learning rate (default %default)' )
     optParser.add_option('-i', '--iterations',action='store',
                          type='int',dest='iters',default=10,

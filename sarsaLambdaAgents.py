@@ -5,6 +5,7 @@ from learningAgents import ReinforcementAgent
 from featureExtractors import *
 
 import random,util,math
+import pprint
           
 class SarsaLambdaAgent(ReinforcementAgent):
   """
@@ -171,9 +172,10 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
     """
     "*** YOUR CODE HERE ***"
     q = 0.0
-
+    
     for feature, value in self.featExtractor.getFeatures(state, action).items():
       q += self.workingWeights[feature] * value
+    
     return q
   
   def getTargetQValue(self, state, action):

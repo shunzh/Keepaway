@@ -46,6 +46,7 @@ def threeVSTwoKeepawayFeatures(state, size):
            min(getAngle(K2, K1, T1), getAngle(K2, K1, T2)),\
            min(getAngle(K3, K1, T1), getAngle(K3, K1, T2))
           ]
+
   return feats
 
 def fourVSThreeKeepawayFeatures(state, size):
@@ -124,8 +125,8 @@ class ThreeVSTwoKeepawayExtractor(FeatureExtractor):
     self.distTileWidth = 0.15
     self.angleTileWidth = 0.17
 
-    self.distTileOffset = self.distTileWidth / 32
-    self.angleTileOffset = self.angleTileWidth / 32
+    self.distTileOffset = self.distTileWidth / 16
+    self.angleTileOffset = self.angleTileWidth / 16
 
   def getFeatures(self, state, action):
     """

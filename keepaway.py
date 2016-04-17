@@ -48,7 +48,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
     that "exit" states transition to the terminal
     state under the special action "done".
     """
-    return [('hold',)] + [('pass', i) for i in range(1, self.keeperNum)]
+    if self.weHaveBall(state):
+      return [('hold',)] + [('pass', i) for i in range(1, self.keeperNum)]
+    else:
+      return [None]
     
   def getReward(self, state, action, nextState):
     """
@@ -203,16 +206,19 @@ class Keepaway(mdp.MarkovDecisionProcess):
     plt.pause(0.01)
 
     # pirnt out the locations of agents in the current state
+    """
     print "Ball:", state[0]
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
+    """
     raw_input("Press Enter to continue...")
 
 if __name__ == '__main__':
   size = 1.0
-  episodes = 50000
+  episodes = 5000
   PLOT = False
   EXPLORE = True
+  TYPE = "32"
 
   if len(sys.argv) > 1:
     if sys.argv[1] == 'test':
@@ -220,64 +226,64 @@ if __name__ == '__main__':
       EXPLORE = False
     elif sys.argv[1] == 'check':
       PLOT = True
+    else:
+      TYPE = sys.argv[1]
+      ID = sys.argv[2]
 
-  mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 400; extractor = "ThreeVSTwoKeepawayExtractor"
-  #mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 500; extractor = "FourVSThreeKeepawayExtractor"
+  if TYPE == "32":
+    mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 200; extractor = "ThreeVSTwoKeepawayExtractor"
+  elif TYPE == "43":
+    mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 300; extractor = "FourVSThreeKeepawayExtractor"
+  else:
+    raise Exception("Unknown type of task")
+
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
                 'alpha': alpha,
-                'epsilon': 0.01 if EXPLORE else 0,
+                'epsilon': 0.05 if EXPLORE else 0,
                 'lambdaValue': 0,
                 'extractor': extractor,
                 'actionFn': actionFn}
-
-  try:
-    if int(sys.argv[1]) < 4:
-      agent = ApproximateSarsaAgent(**qLearnOpts)
-    else:
-      agent = ApproximateQAgent(**qLearnOpts)
-    
-    fileLable = sys.argv[1]
-  except:
-    agent = ApproximateSarsaAgent(**qLearnOpts)
-    fileLable = ""
+  agent = ApproximateSarsaAgent(**qLearnOpts)
 
   if os.path.exists('weights.p'):
     weights = pickle.load(open( "weights.p", "rb" ))
-    agent.weights = weights
-    #agent.weights = featureExtractors.keepwayWeightTranslation(weights)
+    #agent.weights = weights
+    agent.weights = featureExtractors.keepwayWeightTranslation(weights)
 
   tList = []
   for _ in xrange(episodes):
     t = 0
+    lastT = None
+    prevState = None
+    prevAction = None
     state = mdp.getStartState()
+
     while True:
-      if mdp.isTerminal(state) or t > 900:
+      if mdp.isTerminal(state) or t > 1000:
+        agent.update(prevState, prevAction, state, t - lastT)
         break
       
-      if not mdp.weHaveBall(state):
-        nextStateInfo = mdp.getTransitionStatesAndProbs(state, None)[0]
-        nextState, prob = nextStateInfo
-        action = None
-      else:
-        action = agent.getAction(state)
+      if mdp.weHaveBall(state):
+        if lastT != None:
+          agent.update(prevState, prevAction, state, t - lastT)
+        prevState = state
+        lastT = t
 
-        nextStateInfo = mdp.getTransitionStatesAndProbs(state, action)[0]
-        nextState, prob = nextStateInfo
-        reward = mdp.getReward(state, action, nextState)
-        
-        agent.update(state, action, nextState, reward)
-      
+      action = agent.getAction(state)
+      if action != None: prevAction = action
+      nextStateInfo = mdp.getTransitionStatesAndProbs(state, action)[0]
+      nextState, prob = nextStateInfo
+      state = nextState
+    
       if PLOT: mdp.output(nextState); print "Action:", action
       t += 1
-    
-      state = nextState
 
     #pprint.pprint(agent.weights)
     agent.final(state)
     tList.append(t)
     print _, t
     
-    if (_ + 1) % 500 == 0:
-      pickle.dump(tList, open( "time" + fileLable + ".p", "wb" ))
-      pickle.dump(agent.weights, open( "weights" + fileLable + "_" + str(_) + ".p", "wb" ))
+    if (_ + 1) % 100 == 0:
+      pickle.dump(tList, open( "time" + TYPE + ID + ".p", "wb" ))
+      pickle.dump(agent.weights, open( "weights" + TYPE + ID + "_" + str(_) + ".p", "wb" ))
