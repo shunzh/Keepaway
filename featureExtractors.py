@@ -89,8 +89,8 @@ def keepwayWeightTranslation(weights):
     for id, i, action in weights.keys():
       if id == idOld:
         newWeights[(idNew, i, action)] = weights[(idOld, i, action)]
-        if action == ('pass', 2):
-          newWeights[(idNew, i, ('pass', 3))] = weights[(idOld, i, action)]
+        #if action == ('pass', 2):
+        #  newWeights[(idNew, i, ('pass', 3))] = weights[(idOld, i, action)]
   
   copyFeature(0, 0)
 
