@@ -232,9 +232,7 @@ if __name__ == '__main__':
 
   if TYPE == "32":
     mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 200; extractor = "ThreeVSTwoKeepawayExtractor"
-  elif TYPE == "43":
-    mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 400; extractor = "FourVSThreeKeepawayExtractor"
-  elif TYPE == "43t":
+  elif TYPE == "43" or TYPE == "43t":
     mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 300; extractor = "FourVSThreeKeepawayExtractor"
   else:
     raise Exception("Unknown type of task")
