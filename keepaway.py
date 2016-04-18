@@ -215,10 +215,10 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1.0
-  episodes = 5000
+  episodes = 2000
   PLOT = False
   EXPLORE = True
-  TYPE = "32"
+  TYPE = "43t"#"32"
 
   if len(sys.argv) > 1:
     if sys.argv[1] == 'test':
@@ -233,6 +233,8 @@ if __name__ == '__main__':
   if TYPE == "32":
     mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 200; extractor = "ThreeVSTwoKeepawayExtractor"
   elif TYPE == "43":
+    mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 400; extractor = "FourVSThreeKeepawayExtractor"
+  elif TYPE == "43t":
     mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 300; extractor = "FourVSThreeKeepawayExtractor"
   else:
     raise Exception("Unknown type of task")
@@ -240,15 +242,14 @@ if __name__ == '__main__':
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
                 'alpha': alpha,
-                'epsilon': 0.05 if EXPLORE else 0,
+                'epsilon': 0.5 if EXPLORE else 0,
                 'lambdaValue': 0,
                 'extractor': extractor,
                 'actionFn': actionFn}
   agent = ApproximateSarsaAgent(**qLearnOpts)
 
-  if os.path.exists('weights.p'):
+  if TYPE == "43t":
     weights = pickle.load(open( "weights.p", "rb" ))
-    #agent.weights = weights
     agent.weights = featureExtractors.keepwayWeightTranslation(weights)
 
   tList = []
@@ -267,6 +268,7 @@ if __name__ == '__main__':
       if mdp.weHaveBall(state):
         if lastT != None:
           agent.update(prevState, prevAction, state, t - lastT)
+          #print prevAction
         prevState = state
         lastT = t
 

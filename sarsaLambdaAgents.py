@@ -186,6 +186,7 @@ class ApproximateSarsaAgent(SarsaLambdaAgent):
 
     for feature, value in self.featExtractor.getFeatures(state, action).items():
       q += self.weights[feature] * value
+    #print action, q
     return q
     
   def update(self, state, action, nextState, reward):
