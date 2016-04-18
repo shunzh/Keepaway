@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-TIME = 100
-INTERVAL = 10
+TIME = 1000
+INTERVAL = 20
 K = 20
 
 def loadData(filename, rang):
@@ -26,11 +26,13 @@ def loadData(filename, rang):
 
 data43, err43 = loadData('time43', range(0, K))
 data43t, err43t = loadData('time43t', range(0, K))
+data43i, err43i = loadData('time43i', range(0, K))
 
 x = range(0, TIME, INTERVAL)
 plt.errorbar(x, data43, yerr=err43, fmt='x--')
 plt.errorbar(x, data43t, yerr=err43t, fmt='*-')
+plt.errorbar(x, data43i, yerr=err43i, fmt='*-')
 plt.xlabel("Number of Iterations")
 plt.ylabel("Accumulated Rewards")
-plt.legend(['4 vs. 3', '4 vs. 3 with transfer'], 'lower right')
+plt.legend(['4 vs. 3', '4 vs. 3 with transfer', '4 vs. 3 minor'], 'lower right')
 plt.show()

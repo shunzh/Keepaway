@@ -250,7 +250,7 @@ if __name__ == '__main__':
   agent = ApproximateSarsaAgent(**qLearnOpts)
 
   if TYPE == "43t" or TYPE == "43i":
-    weights = pickle.load(open( "weights.p", "rb" ))
+    weights = pickle.load(open( "weights" + TYPE + ".p", "rb" ))
     agent.weights = featureExtractors.keepwayWeightTranslation(weights)
     agent.workingWeights = agent.weights.copy()
 
