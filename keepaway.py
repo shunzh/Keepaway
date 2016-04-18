@@ -15,6 +15,7 @@ import pickle
 import os
 import sys
 import featureExtractors
+import random
 
 class Keepaway(mdp.MarkovDecisionProcess):
   """
@@ -153,7 +154,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
     keepers = list(self.getKeepers(state))
     takers = list(self.getTakers(state))
 
-    keepers = sorted(keepers, key=lambda keeper: util.getPointVectorDistance(keeper, ball, ballVelocity))
+    chasers = sorted(keepers, key=lambda keeper: util.getPointVectorDistance(keeper, ball, ballVelocity))
     # most closest agent, possess the ball, or go to the ball 
     if self.weHaveBall(state):
       # j has the ball, its transition depends on the action
@@ -161,19 +162,21 @@ class Keepaway(mdp.MarkovDecisionProcess):
         pass
       elif action[0] == 'pass':
         # pass the ball to a teammate
-        diff = util.getDirection(keepers[0], keepers[action[1]])
+        rand = util.randomVector(0.1)
+        target = keepers[action[1]]
+        diff = util.getDirection(keepers[0], (target[0] + rand[0], target[1] + rand[1]))
         ballVelocity = (self.ballSpeed * diff[0], self.ballSpeed * diff[1])
       else:
         raise Exception('Unknown action')
     else:
       # j should go to the ball
-      keepers[0] = self.moveTowards(keepers[0], ball)
+      chasers[0] = self.moveTowards(chasers[0], ball)
 
     # other agents get open for a pass
-    for i in xrange(1, len(keepers)):
+    for i in xrange(1, len(chasers)):
       # concretely, this agent goes to a least congested place
-      keepers[i] = self.moveTowards(keepers[i], self.getLeastCongestedLoc(state, keepers[i]))
-    keepers = sorted(keepers, key=lambda keeper: util.getDistance(keeper, ball))
+      chasers[i] = self.moveTowards(chasers[i], self.getLeastCongestedLoc(state, chasers[i]))
+    keepers = sorted(chasers, key=lambda keeper: util.getDistance(keeper, ball))
     
     for i in xrange(2):
       takers[i] = self.moveTowards(takers[i], ball)
@@ -211,14 +214,14 @@ class Keepaway(mdp.MarkovDecisionProcess):
     print "Keepers:", state[1 : self.keeperNum + 1]
     print "Takers:", state[self.keeperNum + 1 :]
     """
-    raw_input("Press Enter to continue...")
+    #raw_input("Press Enter to continue...")
 
 if __name__ == '__main__':
   size = 1.0
   episodes = 1000
   PLOT = False
   EXPLORE = True
-  TYPE = "43t"#"32"
+  TYPE = "43"#"32"
 
   if len(sys.argv) > 1:
     if sys.argv[1] == 'test':
@@ -240,7 +243,7 @@ if __name__ == '__main__':
   actionFn = lambda state: mdp.getPossibleActions(state)
   qLearnOpts = {'gamma': 1, 
                 'alpha': alpha,
-                'epsilon': 0.5 if EXPLORE else 0,
+                'epsilon': 0.02 if EXPLORE else 0,
                 'lambdaValue': 0,
                 'extractor': extractor,
                 'actionFn': actionFn}
@@ -249,6 +252,7 @@ if __name__ == '__main__':
   if TYPE == "43t":
     weights = pickle.load(open( "weights.p", "rb" ))
     agent.weights = featureExtractors.keepwayWeightTranslation(weights)
+    agent.workingWeights = agent.weights.copy()
 
   tList = []
   for _ in xrange(episodes):

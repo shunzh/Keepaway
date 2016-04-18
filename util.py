@@ -12,6 +12,9 @@ import heapq, random
 import math
 from sets import Set
 
+def randomVector(x):
+  return (- x / 2 + x * random.random(), - x / 2 + x * random.random())
+
 def getDistance(point1, point2):
   return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 

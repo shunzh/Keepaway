@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 
-TIME = 500
+TIME = 300
 INTERVAL = 20
 K = 2
 
