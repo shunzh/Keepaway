@@ -7,5 +7,5 @@ Notify_user = menie482@cs.utexas.edu
 
 num_of_processes=20
 
-Arguments = keepaway.py 43t $(Process)
+Arguments = keepaway.py 43 $(Process)
 Queue $(num_of_processes)
