@@ -215,7 +215,7 @@ class Keepaway(mdp.MarkovDecisionProcess):
 
 if __name__ == '__main__':
   size = 1.0
-  episodes = 2000
+  episodes = 1000
   PLOT = False
   EXPLORE = True
   TYPE = "43t"#"32"
