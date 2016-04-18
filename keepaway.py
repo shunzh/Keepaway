@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
   if TYPE == "32":
     mdp = Keepaway(keeperNum=3, takerNum=2); alpha = 0.1 / 200; extractor = "ThreeVSTwoKeepawayExtractor"
-  elif TYPE == "43" or TYPE == "43t" or TYPE == "43r":
+  elif "43" in TYPE:
     mdp = Keepaway(keeperNum=4, takerNum=3); alpha = 0.1 / 300; extractor = "FourVSThreeKeepawayExtractor"
   else:
     raise Exception("Unknown type of task")
@@ -249,13 +249,9 @@ if __name__ == '__main__':
                 'actionFn': actionFn}
   agent = ApproximateSarsaAgent(**qLearnOpts)
 
-  if TYPE == "43t":
+  if TYPE == "43t" or TYPE == "43i":
     weights = pickle.load(open( "weights.p", "rb" ))
     agent.weights = featureExtractors.keepwayWeightTranslation(weights)
-    agent.workingWeights = agent.weights.copy()
-  elif TYPE == '43r':
-    weights = pickle.load(open( "weights.p", "rb" ))
-    agent.weights = weights
     agent.workingWeights = agent.weights.copy()
 
   tList = []

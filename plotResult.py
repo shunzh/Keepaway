@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 
 TIME = 100
-INTERVAL = 20
+INTERVAL = 10
 K = 20
 
 def loadData(filename, rang):
